@@ -159,14 +159,14 @@ section:last-child { border-bottom: none; }
   aspect-ratio: 16 / 9; min-height: 180px;
 }
 .project-media img {
-  width: 100%; height: 100%; display: block; object-fit: cover; object-position: top center;
-  opacity: .86; transition: opacity .25s, transform .45s;
+  width: 100%; height: 100%; display: block; object-fit: cover; object-position: center;
+  opacity: 1; transition: transform .45s;
   color: transparent; font-size: 0;
 }
-.project-media:hover img { opacity: 1; transform: scale(1.015); }
+.project-media:hover img { transform: scale(1.015); }
 .project-media::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(13,15,18,.05) 0%, rgba(13,15,18,.55) 100%);
+  background: linear-gradient(180deg, rgba(13,15,18,0) 70%, rgba(13,15,18,.35) 100%);
 }
 .play-btn {
   position: absolute; left: 20px; bottom: 18px; z-index: 2;
@@ -316,7 +316,7 @@ footer { padding: 60px 0; border-top: 1px solid var(--border); background: linea
         <div class="stat-label">Columns resolved into footing groups</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">4</div>
+        <div class="stat-value">5</div>
         <div class="stat-label">Tools built and run on real models</div>
       </div>
     </div>
@@ -335,11 +335,43 @@ footer { padding: 60px 0; border-top: 1px solid var(--border); background: linea
   <div class="wrap">
     <div class="work-intro">
       <span class="eyebrow">Tools</span>
-      <h2>Four problems solved, each with code.</h2>
+      <h2>Five problems solved, each with code.</h2>
       <p>Every tool below runs against real models. Each one came out of a live project where I watched hours go into something that should have been automatic. Press play on any card to watch it run.</p>
     </div>
 
     <div class="project-grid">
+
+      <article class="project">
+        <div class="project-header">
+          <h3 class="project-title">Grasshopper AI Assistant</h3>
+          <div class="project-tags"><span class="tag">Python</span><span class="tag">Rhino &amp; Grasshopper</span><span class="tag">LLM agents</span><span class="tag">MCP</span></div>
+        </div>
+        <div class="project-body">
+          <div class="project-row">
+            <div class="row-label">Problem</div>
+            <div class="row-content">Building or reading a Grasshopper definition takes Grasshopper fluency, so most engineers never open parametric tools, and the definitions that do exist are hard for anyone else to change.</div>
+          </div>
+          <div class="project-row">
+            <div class="row-label">Solution</div>
+            <div class="row-content">A desktop assistant connected to a live Rhino session. It turns a plain-language request into a wired definition built from native components, edits an existing definition in place, and explains selected components step by step.</div>
+          </div>
+          <div class="project-row">
+            <div class="row-label">Impact</div>
+            <div class="row-content">A twisted tower built from one sentence, then changed to <span class="row-metric">12 floors and a 15° twist in 38 seconds</span> by updating two sliders instead of rebuilding.</div>
+          </div>
+        </div>
+        <button class="project-media" data-src="demos/demo-grasshopper-ai-assistant.mp4" data-title="Grasshopper AI Assistant">
+          <img src="demos/poster-grasshopper-ai-assistant.jpg" width="1600" height="900" loading="lazy" alt="Grasshopper definition for a twisted tower beside the assistant's build summary.">
+          <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
+        </button>
+        <details class="more">
+          <summary>How it works</summary>
+          <div class="inner">
+            <p>A small Rhino plugin starts with Rhino and serves a local Model Context Protocol endpoint, so the assistant drives Rhino and Grasshopper directly without depending on a third-party server. The model plans the definition first, then the plan is compiled into native components and wires on the canvas.</p>
+            <p>Every build is checked twice before it is handed back: the solution is read for errors and warnings, and a viewport capture is compared against the request. Edits change the existing components rather than adding a second copy, and each build can be undone in one step.</p>
+          </div>
+        </details>
+      </article>
 
       <article class="project">
         <div class="project-header">
@@ -361,9 +393,8 @@ footer { padding: 60px 0; border-top: 1px solid var(--border); background: linea
           </div>
         </div>
         <button class="project-media" data-src="demos/demo-foundation-auto-tool.mp4" data-title="ETABS Foundation Auto Tool">
-          <img src="demos/poster-foundation-auto-tool.jpg" width="1000" height="536" loading="lazy" alt="Foundation Auto Tool showing a generated footing schedule.">
+          <img src="demos/poster-foundation-auto-tool.jpg" width="1600" height="900" loading="lazy" alt="Foundation Auto Tool showing a generated footing schedule.">
           <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
-          <span class="media-caption">Parameters, schedule generation, and footings placed back into the ETABS model</span>
         </button>
         <details class="more">
           <summary>How it works</summary>
@@ -394,9 +425,8 @@ footer { padding: 60px 0; border-top: 1px solid var(--border); background: linea
           </div>
         </div>
         <button class="project-media" data-src="demos/demo-etabs-property-validator.mp4" data-title="ETABS Property Validator">
-          <img src="demos/poster-etabs-property-validator.jpg" width="928" height="686" loading="lazy" alt="ETABS Property Validator showing validation results.">
+          <img src="demos/poster-etabs-property-validator.jpg" width="1600" height="900" loading="lazy" alt="ETABS Property Validator showing validation results.">
           <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
-          <span class="media-caption">Validation across frames, walls, and slabs, and the exported mismatch report</span>
         </button>
         <details class="more">
           <summary>How it works</summary>
@@ -427,9 +457,8 @@ footer { padding: 60px 0; border-top: 1px solid var(--border); background: linea
           </div>
         </div>
         <button class="project-media" data-src="demos/demo-beam-schedule-generator.mp4" data-title="Excel to AutoCAD Beam Schedule">
-          <img src="demos/poster-beam-schedule-generator.jpg" width="1000" height="540" loading="lazy" alt="Generated beam elevation with reinforcement callouts.">
+          <img src="demos/poster-beam-schedule-generator.jpg" width="1600" height="900" loading="lazy" alt="Generated beam elevation with reinforcement callouts.">
           <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
-          <span class="media-caption">Schedule read from Excel, drawing generated with callouts and beam marks</span>
         </button>
         <details class="more">
           <summary>How it works</summary>
@@ -460,9 +489,8 @@ footer { padding: 60px 0; border-top: 1px solid var(--border); background: linea
           </div>
         </div>
         <button class="project-media" data-src="demos/demo-rha-strength-predictor.mp4" data-title="Rice Husk Ash Strength Predictor">
-          <img src="demos/poster-rha-strength-predictor.jpg" width="1000" height="532" loading="lazy" alt="Strength predictor showing a 28-day prediction.">
+          <img src="demos/poster-rha-strength-predictor.jpg" width="1600" height="900" loading="lazy" alt="Strength predictor showing a 28-day prediction.">
           <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
-          <span class="media-caption">Mix inputs adjusted and the 28-day strength prediction updating</span>
         </button>
         <details class="more">
           <summary>How it works</summary>
@@ -479,7 +507,7 @@ footer { padding: 60px 0; border-top: 1px solid var(--border); background: linea
       <h3>In development</h3>
       <p class="note">Listed separately because they are not finished. They move up when they are.</p>
       <ul>
-        <li><b>MCP layer</b><span>A Model Context Protocol server over the toolkit, so a model can be queried and driven in plain language. ETABS and Grasshopper adapters first, Revit after.</span></li>
+        <li><b>MCP layer</b><span>A Model Context Protocol server over the toolkit, so a model can be queried and driven in plain language. The Grasshopper adapter is live in the assistant above; ETABS next, Revit after.</span></li>
         <li><b>Model diff</b><span>An ETABS to Revit comparison checking section sizes, material grades, level elevations, and member presence, and reporting where the two models disagree.</span></li>
         <li><b>Revit link</b><span>Placement for the foundation tool: footing families placed, sized, and tagged from the design output, closing the chain from analysis to BIM.</span></li>
       </ul>
@@ -537,7 +565,7 @@ footer { padding: 60px 0; border-top: 1px solid var(--border); background: linea
       </div>
       <div class="skill-block">
         <span class="skill-category">BIM &amp; CAD</span>
-        <div class="skill-items">Revit and Revit API · Dynamo · AutoCAD automation</div>
+        <div class="skill-items">Revit and Revit API · Dynamo · Rhino and Grasshopper · AutoCAD automation</div>
       </div>
       <div class="skill-block">
         <span class="skill-category">Codes</span>
@@ -615,6 +643,7 @@ footer { padding: 60px 0; border-top: 1px solid var(--border); background: linea
 
   Array.prototype.forEach.call(document.querySelectorAll('.project-media'),function(b){
     b.addEventListener('click',function(){
+      var im=b.querySelector('img'); if(im) vid.setAttribute('poster', im.getAttribute('src'));
       open(b.getAttribute('data-src'),b.getAttribute('data-title'),b);
     });
   });

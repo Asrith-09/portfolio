@@ -31,6 +31,7 @@
   --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
   --data: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 
+  --stage-h: 42vh;
   --gutter: max(24px, env(safe-area-inset-left, 0px));
   --gutter-r: max(24px, env(safe-area-inset-right, 0px));
   color-scheme: dark;
@@ -66,6 +67,8 @@ body::before {
 #gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; display: block; }
 .no-gl #gl { display: none; }
 
+@supports (height: 1svh) { :root { --stage-h: 42svh; } }
+.stage { display: none; }
 main, footer { position: relative; z-index: 2; }
 
 h1, h2, h3 { margin: 0; color: var(--chalk); font-family: var(--display); text-wrap: balance; }
@@ -215,6 +218,11 @@ footer { padding: 110px 0 44px; }
 .cursor i { position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; border: 1px solid rgba(238,244,251,.8); border-radius: 50%; transition: transform .25s cubic-bezier(.2,.7,.2,1), background .25s, border-color .25s; }
 .cursor.hot i { transform: scale(1.7); background: rgba(255,210,74,.16); border-color: var(--mark); }
 
+/* 3D LABELS */
+.tags3d { position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.t3 { position: absolute; left: 0; top: 0; font-family: var(--data); font-size: 0.68rem; line-height: 1; color: var(--chalk); white-space: nowrap; opacity: 0; will-change: transform, opacity; text-shadow: 0 0 8px #06182f; }
+.t3.l { padding-right: 12px; color: var(--dim); }
+
 /* MODAL */
 .modal { position: fixed; inset: 0; z-index: 90; display: none; background: rgba(4, 12, 24, .95); padding: 24px; align-items: center; justify-content: center; }
 .modal.on { display: flex; }
@@ -232,9 +240,15 @@ footer { padding: 110px 0 44px; }
 
 /* MOBILE */
 @media (max-width: 900px) {
-  #gl { opacity: 0.42; }
-  .hero-sub, .dim span, .lede { text-shadow: 0 0 14px #06182f, 0 0 4px #06182f; }
-  .hero { padding: 120px 0 48px; }
+  .stage { display: block; position: fixed; left: 0; right: 0; top: 0; height: var(--stage-h); z-index: 3; background: linear-gradient(180deg, #0c2f5c 0%, #06182f 100%); border-bottom: 1px solid var(--edge); pointer-events: none; }
+  #gl { bottom: auto; height: var(--stage-h); z-index: 4; }
+  .tags3d { display: none; }
+  .gauge { display: block; top: calc(var(--stage-h) - 34px); right: max(16px, env(safe-area-inset-right, 0px)); transform: none; height: auto; width: auto; z-index: 6; }
+  .gauge-track { display: none; }
+  .gauge-mark { position: static; height: auto; }
+  .gauge-mark::after { display: none; }
+  .gauge-mark span { position: static; }
+  .hero { padding: calc(var(--stage-h) + 36px) 0 48px; }
   .block { padding: 72px 0; }
   .sheet { background: rgba(6, 24, 47, 0.88); margin-bottom: 48px; }
   .next { background: rgba(6, 24, 47, 0.88); }
@@ -257,7 +271,9 @@ footer { padding: 110px 0 44px; }
 <body>
 
 <div class="progress" id="progress"></div>
+<div class="stage" aria-hidden="true"></div>
 <canvas id="gl" aria-hidden="true"></canvas>
+<div class="tags3d" id="tags3d" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
 
 <aside class="gauge" aria-hidden="true">
@@ -646,18 +662,23 @@ footer { padding: 110px 0 44px; }
 
   /* Scene state. Everything the scroll timeline animates lives here. */
   function mk(o) {
-    var d = { build: 1.06, twist: 0, az: 0.8, el: 0.16, dist: 172, ty: 40, sx: 0.2, foot: 0, sec: 0, beam: 0, brace: 0, net: 0, tower: 1 };
+    var d = {
+      build: 1.06, twist: 0, az: 0.8, el: 0.16, dist: 172, ty: 40, tx: 0, sx: 0.2,
+      foot: 0, sec: 0, beam: 0, brace: 0, net: 0, draw: 0, gh: 0, tower: 1
+    };
     for (var k in o) d[k] = o[k];
     return d;
   }
   var K = {
     hero:  mk({ build: 0.58, az: 0.62, el: 0.2, dist: 150, ty: 30 }),
     work:  mk({ az: 0.95 }),
-    gh:    mk({ twist: 1.5, az: 1.55, el: 0.14 }),
+    gh0:   mk({ build: 0, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26 }),
+    gh1:   mk({ build: 0, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, gh: 1.1 }),
+    gh2:   mk({ twist: 1.5, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, gh: 1.1 }),
     found: mk({ az: 0.7, el: 0.44, dist: 112, ty: 8, foot: 1 }),
     valid: mk({ az: 2.1, el: 0.14, dist: 170, sec: 1 }),
-    beam:  mk({ az: 3.3, el: 0.04, dist: 168, ty: 38, beam: 1 }),
-    rha:   mk({ az: 0.2, el: 0.08, dist: 135, ty: 40, net: 1, tower: 0.1 }),
+    beam:  mk({ az: 0, el: 0, dist: 185, draw: 1.08, tower: 0.03, sx: 0.27 }),
+    rha:   mk({ az: 0.1, el: 0.05, dist: 200, net: 1, tower: 0.05, sx: 0.285 }),
     next:  mk({ build: 0.84, az: 4.3, el: 0.28, dist: 165, ty: 36, brace: 1 }),
     exp:   mk({ twist: 0.35, az: 5.2, el: 0.95, dist: 205, ty: 22 }),
     skills:mk({ az: 6.0, el: 0.16 }),
@@ -718,33 +739,31 @@ footer { padding: 110px 0 44px; }
   var lineFS = 'varying vec4 vCol; void main(){ gl_FragColor = vCol; }';
   var ptFS = 'varying vec4 vCol; void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; gl_FragColor = vec4(vCol.rgb, vCol.a * smoothstep(0.5, 0.05, d)); }';
 
-  function baseMat(vs, fs) {
-    return new THREE.ShaderMaterial({ uniforms: U, vertexShader: vs, fragmentShader: fs, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  function addMat(uniforms, vs, fs) {
+    return new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   }
+  function baseMat(vs, fs) { return addMat(U, vs, fs); }
 
   /* ----- the tower: columns, core, beams, outriggers, footings ----- */
   var P = [], T = [], HH = [];
   function nh(y) { return Math.max(0, Math.min(1, y / H)); }
   function seg(ax, ay, az, bx, by, bz, t) { P.push(ax, ay, az, bx, by, bz); T.push(t, t); HH.push(nh(ay), nh(by)); }
   function segSub(ax, ay, az, bx, by, bz, n, t) {
-    for (var i = 0; i < n; i++) {
-      var f0 = i / n, f1 = (i + 1) / n;
+    for (var q = 0; q < n; q++) {
+      var f0 = q / n, f1 = (q + 1) / n;
       seg(ax + (bx - ax) * f0, ay + (by - ay) * f0, az + (bz - az) * f0, ax + (bx - ax) * f1, ay + (by - ay) * f1, az + (bz - az) * f1, t);
     }
   }
   var f, i, j, gx, gz;
 
-  // columns, two segments per floor so the twist bends them
   for (i = 0; i < G.length; i++) for (j = 0; j < G.length; j++) {
     gx = G[i]; gz = G[j];
     if (gx === 0 && gz === 0) continue;
     for (f = 0; f < FLOORS; f++) segSub(gx, f * FH, gz, gx, (f + 1) * FH, gz, 2, 1);
   }
-  // core walls
   var C = 3;
   var cc = [[-C, -C], [C, -C], [C, C], [-C, C]];
   for (i = 0; i < 4; i++) for (f = 0; f < FLOORS; f++) segSub(cc[i][0], f * FH, cc[i][1], cc[i][0], (f + 1) * FH, cc[i][1], 2, 1);
-  // floor beams and core ring beams
   for (f = 0; f <= FLOORS; f++) {
     var y = f * FH;
     for (j = 0; j < G.length; j++) for (i = 0; i < G.length - 1; i++) {
@@ -753,12 +772,11 @@ footer { padding: 110px 0 44px; }
     }
     for (i = 0; i < 4; i++) { var n2 = cc[(i + 1) % 4]; seg(cc[i][0], y, cc[i][1], n2[0], y, n2[1], 2); }
   }
-  // perimeter X-bracing and outrigger trusses in three bands
   var bands = [[7, 9], [15, 17], [22, 24]];
   bands.forEach(function (b) {
     var y0 = b[0] * FH, y1 = b[1] * FH;
-    for (i = 0; i < G.length - 1; i++) {
-      var a = G[i], c2 = G[i + 1];
+    for (var q = 0; q < G.length - 1; q++) {
+      var a = G[q], c2 = G[q + 1];
       segSub(a, y0, -12, c2, y1, -12, 3, 3); segSub(c2, y0, -12, a, y1, -12, 3, 3);
       segSub(a, y0, 12, c2, y1, 12, 3, 3);   segSub(c2, y0, 12, a, y1, 12, 3, 3);
       segSub(-12, y0, a, -12, y1, c2, 3, 3); segSub(-12, y0, c2, -12, y1, a, 3, 3);
@@ -769,9 +787,7 @@ footer { padding: 110px 0 44px; }
     segSub(0, y0, C, 0, y1, 12, 4, 3);   segSub(0, y1, C, 0, y0, 12, 4, 3);
     segSub(0, y0, -C, 0, y1, -12, 4, 3); segSub(0, y1, -C, 0, y0, -12, 4, 3);
   });
-  // crown mast
   segSub(0, H, 0, 0, H + 14, 0, 4, 1);
-  // footings: three size groups, plus the core raft and tie beams
   function box(cx, cy, cz, sx, sy, sz, t) {
     var x0 = cx - sx / 2, x1 = cx + sx / 2, y0 = cy - sy / 2, y1 = cy + sy / 2, z0 = cz - sz / 2, z1 = cz + sz / 2;
     seg(x0, y0, z0, x1, y0, z0, t); seg(x1, y0, z0, x1, y0, z1, t); seg(x1, y0, z1, x0, y0, z1, t); seg(x0, y0, z1, x0, y0, z0, t);
@@ -782,8 +798,8 @@ footer { padding: 110px 0 44px; }
     gx = G[i]; gz = G[j];
     if (gx === 0 && gz === 0) continue;
     var edge = (Math.abs(gx) === 12 ? 1 : 0) + (Math.abs(gz) === 12 ? 1 : 0);
-    var sz = edge === 2 ? 4.6 : (edge === 1 ? 3.8 : 3.0);
-    box(gx, -0.7, gz, sz, 1.4, sz, 0);
+    var fsz = edge === 2 ? 4.6 : (edge === 1 ? 3.8 : 3.0);
+    box(gx, -0.7, gz, fsz, 1.4, fsz, 0);
   }
   box(0, -1.0, 0, 11, 2.0, 11, 0);
   for (j = 0; j < G.length; j++) for (i = 0; i < G.length - 1; i++) {
@@ -798,7 +814,6 @@ footer { padding: 110px 0 44px; }
   var tower = new THREE.LineSegments(lg, baseMat(lineVS, lineFS));
   tower.frustumCulled = false;
 
-  // joints
   var NP = [], NT = [], NH = [];
   for (f = 0; f <= FLOORS; f++) for (i = 0; i < G.length; i++) for (j = 0; j < G.length; j++) {
     if (G[i] === 0 && G[j] === 0) continue;
@@ -815,14 +830,12 @@ footer { padding: 110px 0 44px; }
   rig.add(tower); rig.add(joints);
   scene.add(rig);
 
-  /* construction plane that rides the build front */
   var plate = new THREE.LineLoop(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-13.5, 0, -13.5), new THREE.Vector3(13.5, 0, -13.5), new THREE.Vector3(13.5, 0, 13.5), new THREE.Vector3(-13.5, 0, 13.5)]),
     new THREE.LineBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false })
   );
   rig.add(plate);
 
-  /* ground grid with radial falloff */
   var GP = [], gstep = 6, gext = 150, gk;
   for (gk = -gext; gk <= gext; gk += gstep) { GP.push(-gext, 0, gk, gext, 0, gk, gk, 0, -gext, gk, 0, gext); }
   var gg = new THREE.BufferGeometry();
@@ -835,36 +848,154 @@ footer { padding: 110px 0 44px; }
   }));
   rig.add(ground);
 
-  /* neural network shown for the strength predictor */
+  /* ===== Beam schedule: an Excel table drafts itself into a dimensioned beam elevation ===== */
+  var BU = { uDraw: { value: 0 } };
+  var BP = [], BX = [], BKd = [];
+  var BX0 = -36, BXW = 68;
+  function bnx(x) { return (x - BX0) / BXW; }
+  function bseg(ax, ay, bx, by, k) {
+    var len = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+    var n = Math.max(1, Math.ceil(len / 1.4));
+    for (var q = 0; q < n; q++) {
+      var t0 = q / n, t1 = (q + 1) / n;
+      var x0 = ax + (bx - ax) * t0, y0 = ay + (by - ay) * t0, x1 = ax + (bx - ax) * t1, y1 = ay + (by - ay) * t1;
+      BP.push(x0, y0, 0, x1, y1, 0); BX.push(bnx(x0), bnx(x1)); BKd.push(k, k);
+    }
+  }
+  var r, x;
+  // schedule table (Excel): 5 rows by 4 columns
+  for (r = 0; r <= 5; r++) bseg(-36, 34 + r * 2.4, -20, 34 + r * 2.4, 4);
+  for (x = 0; x <= 4; x++) bseg(-36 + x * 4, 34, -36 + x * 4, 46, 4);
+  // arrow from the table into the drawing
+  bseg(-18.5, 40, -12.8, 40, 3); bseg(-12.8, 40, -14.2, 41.2, 3); bseg(-12.8, 40, -14.2, 38.8, 3);
+  // beam elevation: concrete outline and column stubs
+  bseg(-8, 37.5, 28, 37.5, 0); bseg(-8, 42.5, 28, 42.5, 0);
+  bseg(-12, 31, -12, 49, 0); bseg(-8, 31, -8, 37.5, 0); bseg(-8, 42.5, -8, 49, 0);
+  bseg(28, 31, 28, 37.5, 0); bseg(28, 42.5, 28, 49, 0); bseg(32, 31, 32, 49, 0);
+  // main bars with hooks
+  bseg(-11, 41.6, 31, 41.6, 1); bseg(-11, 41.1, 31, 41.1, 1);
+  bseg(-11, 41.6, -11, 38.8, 1); bseg(31, 41.6, 31, 38.8, 1);
+  bseg(-11, 38.4, 31, 38.4, 1); bseg(-11, 38.9, 31, 38.9, 1);
+  bseg(-11, 38.4, -11, 41.2, 1); bseg(31, 38.4, 31, 41.2, 1);
+  // extra top bars over the supports
+  bseg(-11, 40.55, 4, 40.55, 1); bseg(14, 40.55, 31, 40.55, 1);
+  // stirrups, closer near the supports
+  var sx;
+  for (sx = -7; sx <= 1; sx += 1.2) bseg(sx, 38.0, sx, 42.0, 2);
+  for (sx = 3.4; sx < 18.6; sx += 2.4) bseg(sx, 38.0, sx, 42.0, 2);
+  for (sx = 20; sx <= 27; sx += 1.2) bseg(sx, 38.0, sx, 42.0, 2);
+  // dimension string and leader
+  bseg(-8, 34.5, 28, 34.5, 3);
+  [-8, 1, 19, 28].forEach(function (tx2) { bseg(tx2, 33.7, tx2, 35.3, 3); });
+  bseg(-8, 36.9, -8, 34.9, 3); bseg(28, 36.9, 28, 34.9, 3);
+  bseg(10, 41.6, 14, 47, 3); bseg(14, 47, 23, 47, 3);
+
+  var bg = new THREE.BufferGeometry();
+  bg.setAttribute('position', new THREE.Float32BufferAttribute(BP, 3));
+  bg.setAttribute('aX', new THREE.Float32BufferAttribute(BX, 1));
+  bg.setAttribute('aK', new THREE.Float32BufferAttribute(BKd, 1));
+  var beamDoc = new THREE.LineSegments(bg, addMat(BU,
+    'attribute float aX, aK; uniform float uDraw; varying vec4 vC; void main(){ float vis = 1.0 - smoothstep(uDraw - 0.01, uDraw + 0.01, aX); float dd = (aX - uDraw) * 16.0; float front = exp(-dd * dd) * step(0.001, uDraw) * (1.0 - smoothstep(1.0, 1.08, uDraw)); vec3 col = aK < 0.5 ? vec3(0.93,0.97,1.0) : (aK < 1.5 ? vec3(1.0,0.82,0.29) : (aK < 2.5 ? vec3(0.62,0.82,1.0) : (aK < 3.5 ? vec3(0.56,0.74,0.92) : vec3(0.72,0.86,1.0)))); float a = aK < 0.5 ? 0.85 : (aK < 1.5 ? 1.0 : (aK < 2.5 ? 0.7 : 0.6)); col = mix(col, vec3(1.0), front * 0.7); vC = vec4(col, (a + front * 0.6) * vis * step(0.001, uDraw)); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    'varying vec4 vC; void main(){ gl_FragColor = vC; }'));
+  beamDoc.frustumCulled = false;
+  beamDoc.position.set(2, 0, 0);
+  beamDoc.visible = false;
+  scene.add(beamDoc);
+
+  /* ===== Grasshopper: the definition wires itself up, then the tower is baked from it ===== */
+  var GU = { uGH: { value: 0 }, uSlide0: { value: 0 }, uSlide1: { value: 0 } };
+  var GPs = [], GOs = [], GKs = [], GSs = [];
+  function gseg(ax, ay, bx, by, o0, o1, k, s) { GPs.push(ax, ay, 0, bx, by, 0); GOs.push(o0, o1); GKs.push(k, k); GSs.push(s || 0, s || 0); }
+  function gsq(cx, cy, h, o) { gseg(cx - h, cy - h, cx + h, cy - h, o, o, 1); gseg(cx + h, cy - h, cx + h, cy + h, o, o, 1); gseg(cx + h, cy + h, cx - h, cy + h, o, o, 1); gseg(cx - h, cy + h, cx - h, cy - h, o, o, 1); }
+  var gcx = [-82, -64, -46, -28], gcy = [58, 44, 30], NWd = 12, NHt = 6;
+  var gnodes = [
+    { n: 'Floors', c: 0, r: 0, o: 0.00, ins: 0, sl: 0 },
+    { n: 'Series', c: 1, r: 0, o: 0.20, ins: 1 },
+    { n: 'Rectangle', c: 1, r: 1, o: 0.10, ins: 0 },
+    { n: 'Move', c: 2, r: 0, o: 0.35, ins: 2 },
+    { n: 'Twist', c: 0, r: 2, o: 0.05, ins: 0, sl: 1 },
+    { n: 'Rotate', c: 2, r: 2, o: 0.50, ins: 2 },
+    { n: 'Loft', c: 3, r: 1, o: 0.65, ins: 1 }
+  ];
+  gnodes.forEach(function (nd) { nd.x = gcx[nd.c]; nd.y = gcy[nd.r]; });
+  function portIn(nd, idx) { var oy = nd.ins <= 1 ? 0 : (idx === 0 ? 1.5 : -1.5); return [nd.x - NWd / 2, nd.y + oy]; }
+  gnodes.forEach(function (nd) {
+    var x0 = nd.x - NWd / 2, x1 = nd.x + NWd / 2, y0 = nd.y - NHt / 2, y1 = nd.y + NHt / 2, o = nd.o;
+    gseg(x0, y0, x1, y0, o, o, 0); gseg(x1, y0, x1, y1, o, o, 0); gseg(x1, y1, x0, y1, o, o, 0); gseg(x0, y1, x0, y0, o, o, 0);
+    gsq(x1, nd.y, 0.5, o);
+    for (var p2 = 0; p2 < nd.ins; p2++) { var pi = portIn(nd, p2); gsq(pi[0], pi[1], 0.5, o); }
+    if (nd.sl !== undefined) {
+      gseg(nd.x - 4.5, nd.y - 1.6, nd.x + 4.5, nd.y - 1.6, o, o, 3);
+      gseg(nd.x - 4.5, nd.y - 2.4, nd.x - 4.5, nd.y - 0.8, o, o, 5, nd.sl);
+    }
+  });
+  function gwire(a, b, inIdx, toTower) {
+    var A = gnodes[a], p0 = [A.x + NWd / 2, A.y], p3, o1;
+    if (toTower) { p3 = [-12, 40]; o1 = 0.95; } else { var B = gnodes[b]; p3 = portIn(B, inIdx); o1 = B.o; }
+    var o0 = A.o + 0.03, d = Math.abs(p3[0] - p0[0]) * 0.5, N = 16, prev = null;
+    for (var q = 0; q <= N; q++) {
+      var t = q / N, u = 1 - t;
+      var px = u * u * u * p0[0] + 3 * u * u * t * (p0[0] + d) + 3 * u * t * t * (p3[0] - d) + t * t * t * p3[0];
+      var py = u * u * u * p0[1] + 3 * u * u * t * p0[1] + 3 * u * t * t * p3[1] + t * t * t * p3[1];
+      var oo = o0 + (o1 - o0) * t;
+      if (prev) gseg(prev[0], prev[1], px, py, prev[2], oo, 2);
+      prev = [px, py, oo];
+    }
+  }
+  gwire(0, 1, 0); gwire(1, 3, 0); gwire(2, 3, 1); gwire(3, 5, 0); gwire(4, 5, 1); gwire(5, 6, 0); gwire(6, 0, 0, true);
+
+  var ggeo = new THREE.BufferGeometry();
+  ggeo.setAttribute('position', new THREE.Float32BufferAttribute(GPs, 3));
+  ggeo.setAttribute('aO', new THREE.Float32BufferAttribute(GOs, 1));
+  ggeo.setAttribute('aK', new THREE.Float32BufferAttribute(GKs, 1));
+  ggeo.setAttribute('aS', new THREE.Float32BufferAttribute(GSs, 1));
+  var ghGraph = new THREE.LineSegments(ggeo, addMat(GU,
+    'attribute float aO, aK, aS; uniform float uGH, uSlide0, uSlide1; varying vec4 vC; void main(){ vec3 p = position; if (aK > 4.5) { p.x += (aS < 0.5 ? uSlide0 : uSlide1) * 9.0; } float vis = 1.0 - smoothstep(uGH - 0.012, uGH + 0.012, aO); float dd = (aO - uGH) * 18.0; float front = exp(-dd * dd) * step(0.001, uGH) * (1.0 - smoothstep(1.05, 1.1, uGH)); vec3 col = aK < 0.5 ? vec3(0.93,0.97,1.0) : (aK < 1.5 ? vec3(0.75,0.88,1.0) : (aK < 2.5 ? vec3(0.56,0.76,0.93) : (aK < 3.5 ? vec3(0.6,0.8,0.95) : vec3(1.0,0.82,0.29)))); float a = aK < 0.5 ? 0.85 : (aK < 1.5 ? 0.9 : (aK < 2.5 ? 0.6 : (aK < 3.5 ? 0.6 : 1.0))); col = mix(col, vec3(1.0,0.82,0.29), front * 0.8); vC = vec4(col, (a + front * 0.5) * vis * step(0.001, uGH)); gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }',
+    'varying vec4 vC; void main(){ gl_FragColor = vC; }'));
+  ghGraph.frustumCulled = false;
+  ghGraph.visible = false;
+  scene.add(ghGraph);
+
+  /* ===== Strength predictor: six mix inputs, a network, and a concrete cube specimen ===== */
   var net = new THREE.Group();
-  var layers = [6, 8, 8, 1], NPos = [];
+  var layers = [6, 8, 8, 1], NPos = [], SPX = 14;
   layers.forEach(function (n, li) {
     var arr = [];
-    for (var ni = 0; ni < n; ni++) arr.push([(li - 1.5) * 24, (ni - (n - 1) / 2) * 7.2, Math.sin(ni * 1.7 + li * 2.1) * 7]);
+    for (var ni = 0; ni < n; ni++) {
+      var yy = n === 1 ? 0 : (ni - (n - 1) / 2) * (36 / (n - 1));
+      arr.push([(li - 1.5) * SPX, yy, li === 3 ? 0 : Math.sin(ni * 1.7 + li * 2.1) * 5]);
+    }
     NPos.push(arr);
   });
   var LP = [], LT = [], LL = [], LR = [];
-  for (var li = 0; li < layers.length - 1; li++) {
-    NPos[li].forEach(function (a) {
-      NPos[li + 1].forEach(function (b) {
-        var r = Math.random();
-        LP.push(a[0], a[1], a[2], b[0], b[1], b[2]);
-        LT.push(0, 1); LL.push(li, li); LR.push(r, r);
-      });
-    });
+  function nseg(ax, ay, az, bx, by, bz, l) { var rr = Math.random(); LP.push(ax, ay, az, bx, by, bz); LT.push(0, 1); LL.push(l, l); LR.push(rr, rr); }
+  var li2, a2, b2;
+  for (li2 = 0; li2 < layers.length - 1; li2++) {
+    for (a2 = 0; a2 < NPos[li2].length; a2++) for (b2 = 0; b2 < NPos[li2 + 1].length; b2++) {
+      var pa = NPos[li2][a2], pb = NPos[li2 + 1][b2];
+      nseg(pa[0], pa[1], pa[2], pb[0], pb[1], pb[2], li2);
+    }
   }
+  var CUBE_X = 37, CS = 4.5;
+  var outN = NPos[3][0];
+  nseg(outN[0], outN[1], outN[2], CUBE_X - CS, 0, 0, 3);
+  (function cube() {
+    var s = CS, cx = CUBE_X, c, d2;
+    var v = [[-s,-s,-s],[s,-s,-s],[s,s,-s],[-s,s,-s],[-s,-s,s],[s,-s,s],[s,s,s],[-s,s,s]];
+    var ed = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+    ed.forEach(function (e) { nseg(cx + v[e[0]][0], v[e[0]][1], v[e[0]][2], cx + v[e[1]][0], v[e[1]][1], v[e[1]][2], 3.5); });
+    for (c = -1; c <= 1; c += 1) { if (c === 0) { nseg(cx - s, 0, -s, cx + s, 0, -s, 3.5); nseg(cx - s, 0, s, cx + s, 0, s, 3.5); nseg(cx - s, 0, -s, cx - s, 0, s, 3.5); nseg(cx + s, 0, -s, cx + s, 0, s, 3.5); } }
+    d2 = 0;
+  })();
   var nlg = new THREE.BufferGeometry();
   nlg.setAttribute('position', new THREE.Float32BufferAttribute(LP, 3));
   nlg.setAttribute('aT', new THREE.Float32BufferAttribute(LT, 1));
   nlg.setAttribute('aL', new THREE.Float32BufferAttribute(LL, 1));
   nlg.setAttribute('aR', new THREE.Float32BufferAttribute(LR, 1));
   var NU = { uNet: { value: 0 }, uTime: U.uTime };
-  var netLines = new THREE.LineSegments(nlg, new THREE.ShaderMaterial({
-    uniforms: NU,
-    vertexShader: 'attribute float aT, aL, aR; uniform float uNet, uTime; varying float vA; varying float vP; void main(){ float pulse = pow(0.5 + 0.5 * sin(uTime * 2.4 - aL * 1.9 + aR * 6.2831 - aT * 1.4), 7.0); vA = uNet * (0.12 + 0.85 * pulse); vP = pulse; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'varying float vA; varying float vP; void main(){ gl_FragColor = vec4(mix(vec3(0.56, 0.78, 1.0), vec3(1.0, 0.82, 0.29), vP), vA); }',
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-  }));
+  var netLines = new THREE.LineSegments(nlg, addMat(NU,
+    'attribute float aT, aL, aR; uniform float uNet, uTime; varying float vA; varying float vP; void main(){ float cubeE = step(3.2, aL); float pulse = pow(0.5 + 0.5 * sin(uTime * 2.4 - aL * 1.9 + aR * 6.2831 - aT * 1.4), 7.0); float cur = 0.5 + 0.5 * sin(uTime * 1.4); vA = uNet * mix(0.12 + 0.85 * pulse, 0.3 + 0.5 * cur, cubeE); vP = mix(pulse, 0.9, cubeE); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    'varying float vA; varying float vP; void main(){ gl_FragColor = vec4(mix(vec3(0.56, 0.78, 1.0), vec3(1.0, 0.82, 0.29), vP), vA); }'));
   netLines.frustumCulled = false;
   var NQ = [], NL = [];
   NPos.forEach(function (arr, li) { arr.forEach(function (p) { NQ.push(p[0], p[1], p[2]); NL.push(li); }); });
@@ -879,15 +1010,15 @@ footer { padding: 110px 0 44px; }
   }));
   netPts.frustumCulled = false;
   net.add(netLines); net.add(netPts);
-  net.position.set(0, 40, 0);
+  net.position.set(-10, 40, 0);
   net.visible = false;
   scene.add(net);
 
   /* drifting dust for depth */
   var DP = [], dn = 650;
   for (i = 0; i < dn; i++) {
-    var r = 40 + Math.random() * 130, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
-    DP.push(r * Math.sin(ph) * Math.cos(th), r * Math.cos(ph) * 0.8 + 30, r * Math.sin(ph) * Math.sin(th));
+    var rad = 40 + Math.random() * 130, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+    DP.push(rad * Math.sin(ph) * Math.cos(th), rad * Math.cos(ph) * 0.8 + 30, rad * Math.sin(ph) * Math.sin(th));
   }
   var dg = new THREE.BufferGeometry();
   dg.setAttribute('position', new THREE.Float32BufferAttribute(DP, 3));
@@ -902,12 +1033,50 @@ footer { padding: 110px 0 44px; }
   dust.frustumCulled = false;
   scene.add(dust);
 
-  /* ----- sizing ----- */
-  var W = 0, Hh = 0;
+  /* ----- labels pinned to points in the 3D scene (desktop) ----- */
+  var tagsEl = document.getElementById('tags3d'), tags = [], tv = new THREE.Vector3();
+  function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+  function addTag(text, group, px, py, pz, align, fn) {
+    var el = document.createElement('div');
+    el.className = 't3 ' + align; el.textContent = text;
+    tagsEl.appendChild(el);
+    tags.push({ el: el, g: group, v: new THREE.Vector3(px, py, pz), a: align, f: fn, on: false });
+  }
+  gnodes.forEach(function (nd) {
+    addTag(nd.n, ghGraph, nd.x, nd.y + (nd.sl !== undefined ? 0.9 : 0), 0, 'c', function () { return clamp01((S.gh - nd.o) / 0.06); });
+  });
+  ['RHA', 'Cement', 'Water', 'Fine agg.', 'Coarse agg.', 'Plasticiser'].forEach(function (nm, k) {
+    var p = NPos[0][k];
+    addTag(nm, net, p[0], p[1], p[2], 'l', function () { return clamp01((S.net - 0.4) / 0.5); });
+  });
+  addTag('28-day strength', net, CUBE_X, -CS - 3.5, 0, 'c', function () { return clamp01((S.net - 0.4) / 0.5); });
+  addTag('Excel schedule', beamDoc, -28, 48.6, 0, 'c', function () { return clamp01((S.draw - bnx(-28)) / 0.05); });
+  addTag('AutoCAD beam elevation', beamDoc, 10, 51, 0, 'c', function () { return clamp01((S.draw - bnx(10)) / 0.05); });
+  function updateTags(w, h, mobile) {
+    var q, t, o, sx2, sy2, off;
+    camera.updateMatrixWorld();
+    scene.updateMatrixWorld(true);
+    for (q = 0; q < tags.length; q++) {
+      t = tags[q];
+      o = mobile ? 0 : t.f();
+      if (o < 0.02) { if (t.on) { t.el.style.opacity = 0; t.on = false; } continue; }
+      t.on = true;
+      tv.copy(t.v); t.g.localToWorld(tv); tv.project(camera);
+      sx2 = (tv.x * 0.5 + 0.5) * w; sy2 = (-tv.y * 0.5 + 0.5) * h;
+      off = t.a === 'l' ? '-100%' : (t.a === 'c' ? '-50%' : '0');
+      t.el.style.opacity = o.toFixed(2);
+      t.el.style.transform = 'translate(' + sx2.toFixed(1) + 'px,' + sy2.toFixed(1) + 'px) translate(' + off + ',-50%)';
+    }
+  }
+
+  /* ----- sizing: full screen on desktop, a stage at the top on phones ----- */
+  var W = 0, Hs = 0;
   function resize() {
-    var w = window.innerWidth, h = window.innerHeight;
-    if (w === W && Math.abs(h - Hh) < 120) return;
-    W = w; Hh = h;
+    var w = window.innerWidth, mobile = w < 900;
+    var h = mobile ? Math.round(canvas.getBoundingClientRect().height) : window.innerHeight;
+    if (!h) h = window.innerHeight;
+    if (w === W && Math.abs(h - Hs) < (mobile ? 2 : 120)) return;
+    W = w; Hs = h;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -944,33 +1113,38 @@ footer { padding: 110px 0 44px; }
     U.uTime.value = time;
     U.uBuild.value = eff;
     U.uTwist.value = S.twist;
-    U.uTower.value = S.tower * (mobile ? 0.65 : 1);
+    U.uTower.value = S.tower;
     U.uHL.value.set(S.foot, S.sec, S.beam, S.brace);
     NU.uNet.value = S.net;
     net.visible = S.net > 0.01;
-    net.rotation.y = 0.55 + Math.sin(time * 0.25) * 0.3;
+    net.rotation.y = 0.12 + Math.sin(time * 0.25) * 0.15;
+    BU.uDraw.value = S.draw;
+    beamDoc.visible = S.draw > 0.001;
+    GU.uGH.value = S.gh;
+    GU.uSlide0.value = Math.max(0, Math.min(1, eff)) * 0.8;
+    GU.uSlide1.value = S.twist / 1.5;
+    ghGraph.visible = S.gh > 0.001;
 
-    var az = S.az + (reduce ? 0 : Math.sin(time * 0.12) * 0.05) + mx * 0.12;
-    var el = S.el + my * 0.04;
-    var aspect = camera.aspect;
-    var dist = S.dist * (aspect < 1 ? 1.25 : 1);
-    tmpTarget.set(0, S.ty, 0);
+    var az = S.az + (reduce ? 0 : Math.sin(time * 0.12) * 0.05) + mx * 0.1;
+    var el = S.el + my * 0.03;
+    var dist = S.dist * (camera.aspect < 0.9 ? 1.25 : 1);
+    tmpTarget.set(S.tx, S.ty, 0);
     camera.position.set(
-      dist * Math.cos(el) * Math.sin(az),
+      S.tx + dist * Math.cos(el) * Math.sin(az),
       S.ty + dist * Math.sin(el),
       dist * Math.cos(el) * Math.cos(az)
     );
     camera.lookAt(tmpTarget);
-    var wpx = window.innerWidth, hpx = window.innerHeight;
-    camera.setViewOffset(wpx, hpx, -(mobile ? 0 : S.sx) * wpx, 0, wpx, hpx);
+    camera.setViewOffset(W, Hs, -(mobile ? 0 : S.sx) * W, mobile ? -26 : 0, W, Hs);
 
     var bv = Math.min(eff, 1);
     plate.position.y = bv * H;
-    plate.rotation.y = -S.twist * bv * 1.0;
+    plate.rotation.y = -S.twist * bv;
     plate.visible = eff > 0.01 && eff < 0.995 && S.tower > 0.3;
     dust.rotation.y = time * 0.01;
     updateGauge(eff);
     renderer.render(scene, camera);
+    updateTags(W, Hs, mobile);
   }
   requestAnimationFrame(frame);
 
@@ -985,8 +1159,9 @@ footer { padding: 110px 0 44px; }
       a.addEventListener('click', function (e) {
         var id = a.getAttribute('href');
         var el = id.length > 1 ? document.querySelector(id) : null;
+        var off = window.innerWidth < 900 ? -(Hs + 16) : -20;
         if (id === '#top') { e.preventDefault(); lenis.scrollTo(0); }
-        else if (el) { e.preventDefault(); lenis.scrollTo(el, { offset: -20 }); }
+        else if (el) { e.preventDefault(); lenis.scrollTo(el, { offset: off }); }
       });
     });
   }
@@ -994,8 +1169,10 @@ footer { padding: 110px 0 44px; }
   /* ----- scroll timeline: camera and structure keyframes tied to sections ----- */
   var tl = null;
   var stops = [
-    ['#work', K.work], ['[data-k="gh"]', K.gh], ['[data-k="found"]', K.found], ['[data-k="valid"]', K.valid],
-    ['[data-k="beam"]', K.beam], ['[data-k="rha"]', K.rha], ['[data-k="next"]', K.next],
+    ['#work', K.work],
+    ['[data-k="gh"]', K.gh0], ['[data-k="gh"] .project-media', K.gh1], ['[data-k="gh"] details', K.gh2],
+    ['[data-k="found"]', K.found], ['[data-k="valid"]', K.valid], ['[data-k="beam"]', K.beam],
+    ['[data-k="rha"]', K.rha], ['[data-k="next"]', K.next],
     ['#experience', K.exp], ['#skills', K.skills], ['#contact', K.contact]
   ];
   function copy(o) { var c = {}; for (var k in o) c[k] = o[k]; return c; }
@@ -1005,6 +1182,8 @@ footer { padding: 110px 0 44px; }
     var vh = window.innerHeight;
     var total = Math.max(1, document.documentElement.scrollHeight - vh);
     var sy = window.scrollY || 0;
+    var mobile = window.innerWidth < 900;
+    var topLine = mobile ? Hs + vh * 0.12 : vh * 0.3;
     tl = gsap.timeline({
       defaults: { ease: 'power1.inOut' },
       scrollTrigger: { trigger: document.body, start: 'top top', end: 'bottom bottom', scrub: reduce ? true : 1.1 }
@@ -1014,19 +1193,19 @@ footer { padding: 110px 0 44px; }
       var el = document.querySelector(s[0]);
       if (!el) return;
       var top = el.getBoundingClientRect().top + sy;
-      var end = Math.max(prevEnd + 60, top - vh * 0.3);
+      var end = Math.max(prevEnd + 60, top - topLine);
       end = Math.min(end, total - 1);
       var start = Math.max(prevEnd, end - vh * 0.85);
       var vars = copy(s[1]);
       vars.duration = Math.max(0.0001, (end - start) / total);
       vars.immediateRender = false;
+      vars.ease = (s[0].indexOf('project-media') > -1 || s[0] === '[data-k="gh"]') ? 'none' : 'power1.inOut';
       tl.fromTo(S, copy(prevK), vars, start / total);
       prevEnd = end; prevK = s[1];
     });
     tl.set({}, {}, 1);
   }
 
-  /* progress bar */
   var bar = document.getElementById('progress');
   function updateBar() {
     var max = document.documentElement.scrollHeight - window.innerHeight;
@@ -1034,7 +1213,6 @@ footer { padding: 110px 0 44px; }
   }
   window.addEventListener('scroll', updateBar, { passive: true });
 
-  /* marquee tied to scroll */
   var band = document.getElementById('bandTrack');
   if (band && !reduce) {
     gsap.fromTo(band, { xPercent: 0 }, {
@@ -1043,7 +1221,6 @@ footer { padding: 110px 0 44px; }
     });
   }
 
-  /* hero intro: words rise, then the tower assembles */
   var h1 = document.getElementById('heroTitle');
   function splitWords(el) {
     var words = el.textContent.trim().split(/\s+/);
@@ -1064,7 +1241,6 @@ footer { padding: 110px 0 44px; }
     gsap.to(S, { intro: 1, duration: 3.2, ease: 'power2.out', delay: 0.15 });
   }
 
-  /* cursor ring and magnetic buttons */
   if (!coarse && !reduce) {
     var cur = document.getElementById('cursor');
     var qx = gsap.quickTo(cur, 'x', { duration: 0.25, ease: 'power3' });
@@ -1077,16 +1253,15 @@ footer { padding: 110px 0 44px; }
     document.addEventListener('mouseleave', function () { cur.classList.remove('on'); });
     document.querySelectorAll('.btn, .nav-cta').forEach(function (b) {
       b.addEventListener('pointermove', function (e) {
-        var r = b.getBoundingClientRect();
-        gsap.to(b, { x: (e.clientX - (r.left + r.width / 2)) * 0.22, y: (e.clientY - (r.top + r.height / 2)) * 0.3, duration: 0.3, ease: 'power2.out' });
+        var rc = b.getBoundingClientRect();
+        gsap.to(b, { x: (e.clientX - (rc.left + rc.width / 2)) * 0.22, y: (e.clientY - (rc.top + rc.height / 2)) * 0.3, duration: 0.3, ease: 'power2.out' });
       });
       b.addEventListener('pointerleave', function () { gsap.to(b, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1, 0.5)' }); });
     });
   }
 
-  /* build, then rebuild when layout settles */
   var rebuildTimer;
-  function scheduleBuild() { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(function () { buildTimeline(); ScrollTrigger.refresh(); }, 200); }
+  function scheduleBuild() { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(function () { resize(); buildTimeline(); ScrollTrigger.refresh(); }, 200); }
   buildTimeline();
   updateBar();
   window.addEventListener('load', scheduleBuild);

@@ -240,18 +240,18 @@ footer { padding: 110px 0 44px; }
 
 /* MOBILE */
 @media (max-width: 900px) {
-  .stage { display: block; position: fixed; left: 0; right: 0; top: 0; height: var(--stage-h); z-index: 3; background: linear-gradient(180deg, #0c2f5c 0%, #06182f 100%); border-bottom: 1px solid var(--edge); pointer-events: none; }
-  #gl { bottom: auto; height: var(--stage-h); z-index: 4; }
   .tags3d { display: none; }
-  .gauge { display: block; top: calc(var(--stage-h) - 34px); right: max(16px, env(safe-area-inset-right, 0px)); transform: none; height: auto; width: auto; z-index: 6; }
+  .gauge { display: block; top: auto; bottom: max(14px, env(safe-area-inset-bottom, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); transform: none; height: auto; width: auto; z-index: 6; }
   .gauge-track { display: none; }
   .gauge-mark { position: static; height: auto; }
   .gauge-mark::after { display: none; }
   .gauge-mark span { position: static; }
-  .hero { padding: calc(var(--stage-h) + 36px) 0 48px; }
+  .hero { padding: 120px 0 48px; }
   .block { padding: 72px 0; }
-  .sheet { background: rgba(6, 24, 47, 0.88); margin-bottom: 48px; }
-  .next { background: rgba(6, 24, 47, 0.88); }
+  .sheet { background: rgba(6, 24, 47, 0.46); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); margin-bottom: 48px; }
+  .next { background: rgba(6, 24, 47, 0.46); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); }
+  .hero-sub, .dim span, .lede, .row-content, .exp p, .skill p, .next li, .inner p, footer p { text-shadow: 0 0 10px rgba(6,24,47,.95), 0 0 3px rgba(6,24,47,.95); }
+  .sheet-head h3, h1, h2, .exp-role { text-shadow: 0 0 14px rgba(6,24,47,.9); }
   .row { grid-template-columns: 1fr; gap: 4px; }
   .sheet-head, .sheet-body { padding-left: 20px; padding-right: 20px; }
   details.more summary { padding-left: 20px; padding-right: 20px; }
@@ -271,7 +271,6 @@ footer { padding: 110px 0 44px; }
 <body>
 
 <div class="progress" id="progress"></div>
-<div class="stage" aria-hidden="true"></div>
 <canvas id="gl" aria-hidden="true"></canvas>
 <div class="tags3d" id="tags3d" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
@@ -664,21 +663,21 @@ footer { padding: 110px 0 44px; }
   function mk(o) {
     var d = {
       build: 1.06, twist: 0, az: 0.8, el: 0.16, dist: 172, ty: 40, tx: 0, sx: 0.2,
-      foot: 0, sec: 0, beam: 0, brace: 0, net: 0, draw: 0, gh: 0, tower: 1
+      foot: 0, sec: 0, beam: 0, brace: 0, net: 0, draw: 0, gh: 0, tower: 1, wid: 36, sy: 0
     };
     for (var k in o) d[k] = o[k];
     return d;
   }
   var K = {
-    hero:  mk({ build: 0.58, az: 0.62, el: 0.2, dist: 150, ty: 30 }),
+    hero:  mk({ build: 0.58, az: 0.62, el: 0.2, dist: 150, ty: 30, sy: 0.2 }),
     work:  mk({ az: 0.95 }),
-    gh0:   mk({ build: 0, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26 }),
-    gh1:   mk({ build: 0, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, gh: 1.1 }),
-    gh2:   mk({ twist: 1.5, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, gh: 1.1 }),
+    gh0:   mk({ build: 0, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, wid: 112 }),
+    gh1:   mk({ build: 0, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, wid: 112, gh: 1.1 }),
+    gh2:   mk({ twist: 1.5, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, wid: 112, gh: 1.1 }),
     found: mk({ az: 0.7, el: 0.44, dist: 112, ty: 8, foot: 1 }),
     valid: mk({ az: 2.1, el: 0.14, dist: 170, sec: 1 }),
-    beam:  mk({ az: 0, el: 0, dist: 185, draw: 1.08, tower: 0.03, sx: 0.27 }),
-    rha:   mk({ az: 0.1, el: 0.05, dist: 200, net: 1, tower: 0.05, sx: 0.285 }),
+    beam:  mk({ az: 0, el: 0, dist: 185, draw: 1.08, tower: 0.03, sx: 0.27, wid: 76 }),
+    rha:   mk({ az: 0.1, el: 0.05, dist: 200, net: 1, tower: 0.05, sx: 0.285, wid: 72 }),
     next:  mk({ build: 0.84, az: 4.3, el: 0.28, dist: 165, ty: 36, brace: 1 }),
     exp:   mk({ twist: 0.35, az: 5.2, el: 0.95, dist: 205, ty: 22 }),
     skills:mk({ az: 6.0, el: 0.16 }),
@@ -1072,10 +1071,8 @@ footer { padding: 110px 0 44px; }
   /* ----- sizing: full screen on desktop, a stage at the top on phones ----- */
   var W = 0, Hs = 0;
   function resize() {
-    var w = window.innerWidth, mobile = w < 900;
-    var h = mobile ? Math.round(canvas.getBoundingClientRect().height) : window.innerHeight;
-    if (!h) h = window.innerHeight;
-    if (w === W && Math.abs(h - Hs) < (mobile ? 2 : 120)) return;
+    var w = window.innerWidth, h = window.innerHeight;
+    if (w === W && Math.abs(h - Hs) < 100) return;
     W = w; Hs = h;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
@@ -1113,7 +1110,7 @@ footer { padding: 110px 0 44px; }
     U.uTime.value = time;
     U.uBuild.value = eff;
     U.uTwist.value = S.twist;
-    U.uTower.value = S.tower;
+    U.uTower.value = S.tower * (mobile ? 0.8 : 1);
     U.uHL.value.set(S.foot, S.sec, S.beam, S.brace);
     NU.uNet.value = S.net;
     net.visible = S.net > 0.01;
@@ -1128,6 +1125,8 @@ footer { padding: 110px 0 44px; }
     var az = S.az + (reduce ? 0 : Math.sin(time * 0.12) * 0.05) + mx * 0.1;
     var el = S.el + my * 0.03;
     var dist = S.dist * (camera.aspect < 0.9 ? 1.25 : 1);
+    var fit = S.wid / (2 * 0.2867 * camera.aspect);
+    if (fit > dist) dist = fit;
     tmpTarget.set(S.tx, S.ty, 0);
     camera.position.set(
       S.tx + dist * Math.cos(el) * Math.sin(az),
@@ -1135,7 +1134,7 @@ footer { padding: 110px 0 44px; }
       dist * Math.cos(el) * Math.cos(az)
     );
     camera.lookAt(tmpTarget);
-    camera.setViewOffset(W, Hs, -(mobile ? 0 : S.sx) * W, mobile ? -26 : 0, W, Hs);
+    camera.setViewOffset(W, Hs, -(mobile ? 0 : S.sx) * W, mobile ? -S.sy * Hs : 0, W, Hs);
 
     var bv = Math.min(eff, 1);
     plate.position.y = bv * H;
@@ -1159,7 +1158,7 @@ footer { padding: 110px 0 44px; }
       a.addEventListener('click', function (e) {
         var id = a.getAttribute('href');
         var el = id.length > 1 ? document.querySelector(id) : null;
-        var off = window.innerWidth < 900 ? -(Hs + 16) : -20;
+        var off = -20;
         if (id === '#top') { e.preventDefault(); lenis.scrollTo(0); }
         else if (el) { e.preventDefault(); lenis.scrollTo(el, { offset: off }); }
       });
@@ -1183,7 +1182,7 @@ footer { padding: 110px 0 44px; }
     var total = Math.max(1, document.documentElement.scrollHeight - vh);
     var sy = window.scrollY || 0;
     var mobile = window.innerWidth < 900;
-    var topLine = mobile ? Hs + vh * 0.12 : vh * 0.3;
+    var topLine = vh * 0.3;
     tl = gsap.timeline({
       defaults: { ease: 'power1.inOut' },
       scrollTrigger: { trigger: document.body, start: 'top top', end: 'bottom bottom', scrub: reduce ? true : 1.1 }

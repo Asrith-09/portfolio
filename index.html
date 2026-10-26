@@ -137,6 +137,10 @@ main { position: relative; z-index: 2; }
 .ch-demo .dm-bar b { margin-left: auto; font-weight: 500; color: var(--ink); }
 .ch-demo video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #000; }
 .ch-demo:hover .dm-bar b { color: var(--accent); }
+.ch-demo .dm-tap { display: none; }
+.lite-video .ch-demo .dm-tap { display: flex; position: absolute; left: 0; right: 0; bottom: 0; top: 34px; align-items: center; justify-content: center; gap: 12px; background: rgba(5,7,11,.35); color: var(--ink); font-size: .9rem; font-weight: 600; }
+.lite-video .ch-demo .dm-tap i { width: 56px; height: 56px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; }
+.lite-video .ch-demo .dm-tap i svg { width: 12px; height: 14px; margin-left: 3px; }
 
 /* live readouts */
 .live { margin-top: 26px; display: grid; gap: 12px; max-width: 420px; font-family: var(--mono); font-size: 0.78rem; color: var(--mute); }
@@ -309,7 +313,7 @@ footer.plain { padding-bottom: 60px; }
   </section>
 
   <section class="ch" data-ch="gh" style="height:340vh">
-    <div class="ch-stick"><div class="ch-demo" data-p="gh" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>grasshopper_ai_assistant.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-grasshopper-ai-assistant.jpg" data-src="demos/demo-grasshopper-ai-assistant.mp4"></video></div><div class="ch-text">
+    <div class="ch-stick"><div class="ch-demo" data-p="gh" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>grasshopper_ai_assistant.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-grasshopper-ai-assistant.jpg" data-src="demos/demo-grasshopper-ai-assistant.mp4"></video><span class="dm-tap"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Tap to play demo</span></div><div class="ch-text">
       <div class="num"><b>03</b><i></i>Rhino · Grasshopper · LLM</div>
       <h2 class="big">Grasshopper <em>AI Assistant</em></h2>
       <p class="line">A twisted tower built from one sentence, then changed to <span class="m">12 floors and a 15° twist in 38 seconds</span> by updating two sliders instead of rebuilding.</p>
@@ -322,7 +326,7 @@ footer.plain { padding-bottom: 60px; }
   </section>
 
   <section class="ch" data-ch="found" style="height:340vh">
-    <div class="ch-stick"><div class="ch-demo" data-p="found" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>foundation_auto_tool.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-foundation-auto-tool.jpg" data-src="demos/demo-foundation-auto-tool.mp4"></video></div><div class="ch-text">
+    <div class="ch-stick"><div class="ch-demo" data-p="found" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>foundation_auto_tool.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-foundation-auto-tool.jpg" data-src="demos/demo-foundation-auto-tool.mp4"></video><span class="dm-tap"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Tap to play demo</span></div><div class="ch-text">
       <div class="num"><b>04</b><i></i>Python · ETABS API · IS 456</div>
       <h2 class="big">ETABS Foundation <em>Auto Tool</em></h2>
       <p class="line">Reads column reactions, sizes isolated footings against safe bearing capacity, groups them within a set tolerance, and builds the footing geometry back into ETABS.</p>
@@ -332,7 +336,7 @@ footer.plain { padding-bottom: 60px; }
   </section>
 
   <section class="ch" data-ch="valid" style="height:340vh">
-    <div class="ch-stick"><div class="ch-demo" data-p="valid" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>property_validator.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-etabs-property-validator.jpg" data-src="demos/demo-etabs-property-validator.mp4"></video></div><div class="ch-text">
+    <div class="ch-stick"><div class="ch-demo" data-p="valid" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>property_validator.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-etabs-property-validator.jpg" data-src="demos/demo-etabs-property-validator.mp4"></video><span class="dm-tap"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Tap to play demo</span></div><div class="ch-text">
       <div class="num"><b>05</b><i></i>Python · ETABS API · Excel</div>
       <h2 class="big">ETABS Property <em>Validator</em></h2>
       <p class="line">Audits every frame, wall, and slab section against its assigned name. Caught two frame mismatches that had passed visual review.</p>
@@ -342,7 +346,7 @@ footer.plain { padding-bottom: 60px; }
   </section>
 
   <section class="ch" data-ch="beam" style="height:340vh">
-    <div class="ch-stick"><div class="ch-demo" data-p="beam" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>beam_schedule.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-beam-schedule-generator.jpg" data-src="demos/demo-beam-schedule-generator.mp4"></video></div><div class="ch-text">
+    <div class="ch-stick"><div class="ch-demo" data-p="beam" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>beam_schedule.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-beam-schedule-generator.jpg" data-src="demos/demo-beam-schedule-generator.mp4"></video><span class="dm-tap"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Tap to play demo</span></div><div class="ch-text">
       <div class="num"><b>06</b><i></i>Python · AutoCAD · Excel</div>
       <h2 class="big">Excel to AutoCAD <em>Beam Schedule</em></h2>
       <p class="line">Reads a reinforcement schedule from Excel and draws dimensioned beam elevations directly in AutoCAD, with rebar callouts, hooks, beam marks, layers, and annotation applied automatically.</p>
@@ -351,7 +355,7 @@ footer.plain { padding-bottom: 60px; }
   </section>
 
   <section class="ch" data-ch="rha" style="height:340vh">
-    <div class="ch-stick"><div class="ch-demo" data-p="rha" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>rha_strength_predictor.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-rha-strength-predictor.jpg" data-src="demos/demo-rha-strength-predictor.mp4"></video></div><div class="ch-text">
+    <div class="ch-stick"><div class="ch-demo" data-p="rha" aria-label="Play demo with sound"><div class="dm-bar"><i></i><i></i><i></i><span>rha_strength_predictor.mp4</span><b>▶ Full screen</b></div><video muted loop playsinline preload="none" poster="demos/poster-rha-strength-predictor.jpg" data-src="demos/demo-rha-strength-predictor.mp4"></video><span class="dm-tap"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Tap to play demo</span></div><div class="ch-text">
       <div class="num"><b>07</b><i></i>Python · Neural network · M.Tech thesis</div>
       <h2 class="big">Rice Husk Ash <em>Strength Predictor</em></h2>
       <p class="line">A neural network predicting 28-day compressive strength from six mix-proportion inputs, instead of casting samples and waiting 28 days.</p>
@@ -567,7 +571,7 @@ footer.plain { padding-bottom: 60px; }
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (window.gsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
   if (!reduce && window.Lenis && window.gsap) {
-    var lenis = new Lenis({ lerp: 0.085, smoothWheel: true });
+    var lenis = new Lenis({ lerp: 0.14, smoothWheel: true, wheelMultiplier: 1.05 });
     window.__lenis = lenis;
     if (window.ScrollTrigger) lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add(function (t) { lenis.raf(t * 1000); });
@@ -593,7 +597,15 @@ footer.plain { padding-bottom: 60px; }
     chs.forEach(function (c) { c.top = c.el.getBoundingClientRect().top + y; c.span = Math.max(1, c.el.offsetHeight - vh); });
   }
   function sm(a, b, x) { var t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
-  var lastIdx = -1;
+  /* bandwidth-aware video: no autoplay on data saver, slow networks or low-end devices */
+  var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  function slowNet() { return !!(conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || '') || (conn.downlink && conn.downlink < 1.5))); }
+  var lowDevice = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 3;
+  var autoVideo = !reduce && !slowNet() && !lowDevice;
+  if (conn && conn.addEventListener) conn.addEventListener('change', function () { autoVideo = !reduce && !slowNet() && !lowDevice; document.documentElement.classList.toggle('lite-video', !autoVideo); });
+  document.documentElement.classList.toggle('lite-video', !autoVideo);
+  var modalEl = document.getElementById('modal');
+  var lastIdx = -1, lastPast = null, lastY = -1, hudR = document.querySelector('.hud-r');
   function frame() {
     var y = window.scrollY || 0, idx = 0;
     for (var i = 0; i < chs.length; i++) {
@@ -601,18 +613,23 @@ footer.plain { padding-bottom: 60px; }
       if (i === 0) o = 1 - sm(0.35, 0.95, p);
       else o = sm(-0.2, 0.06, p) * (1 - sm(0.84, 1.0, p));
       if (window.__introHold && i === 0) o = 0;
-      c.text.style.opacity = o.toFixed(3);
-      c.text.style.transform = 'translate3d(0,' + ((1 - o) * 26).toFixed(1) + 'px,0)';
-      c.text.style.visibility = o < 0.01 ? 'hidden' : 'visible';
-      c.stick.style.setProperty('--o', o.toFixed(3));
+      var oq = Math.round(o * 100) / 100;
+      if (oq !== c.lo) {
+        c.lo = oq;
+        c.text.style.opacity = oq;
+        c.text.style.transform = 'translate3d(0,' + ((1 - oq) * 26).toFixed(1) + 'px,0)';
+        c.text.style.visibility = oq < 0.01 ? 'hidden' : 'visible';
+        c.stick.style.setProperty('--o', oq);
+      }
       if (c.demo) {
-        var dm = sm(0.44, 0.54, p) * (1 - sm(0.93, 1.0, p));
+        var dm = Math.round(sm(0.44, 0.54, p) * (1 - sm(0.93, 1.0, p)) * 100) / 100;
         var mob = window.innerWidth <= 900;
-        c.demo.style.opacity = dm.toFixed(3);
+        if (dm !== c.ld) { c.ld = dm;
+        c.demo.style.opacity = dm;
         c.demo.style.visibility = dm < 0.01 ? 'hidden' : 'visible';
         c.demo.style.transform = mob ? 'translate3d(0,' + ((1 - dm) * 30).toFixed(1) + 'px,0) scale(' + (0.96 + dm * 0.04).toFixed(3) + ')'
-                                     : 'translate3d(' + ((1 - dm) * 60).toFixed(1) + 'px,-50%,0) scale(' + (0.96 + dm * 0.04).toFixed(3) + ')';
-        var want = dm > 0.05 && !document.getElementById('modal').classList.contains('on');
+                                     : 'translate3d(' + ((1 - dm) * 60).toFixed(1) + 'px,-50%,0) scale(' + (0.96 + dm * 0.04).toFixed(3) + ')'; }
+        var want = autoVideo && dm > 0.05 && !modalEl.classList.contains('on');
         if (want && !c.playing) {
           if (!c.vid.getAttribute('src')) c.vid.setAttribute('src', c.vid.getAttribute('data-src'));
           var pr = c.vid.play(); if (pr && pr.catch) pr.catch(function () {});
@@ -623,9 +640,9 @@ footer.plain { padding-bottom: 60px; }
     }
     var pastAll = plains.length && plains[0].getBoundingClientRect().top < window.innerHeight * 0.5;
     if (idx !== lastIdx) { hudN.textContent = ('0' + (idx + 1)).slice(-2); hudT.textContent = names[idx]; lastIdx = idx; }
-    document.querySelector('.hud-r').style.opacity = pastAll ? 0 : 1;
-    var max = document.documentElement.scrollHeight - window.innerHeight;
-    bar.style.transform = 'scaleX(' + (max > 0 ? y / max : 0).toFixed(4) + ')';
+    if (pastAll !== lastPast) { hudR.style.opacity = pastAll ? 0 : 1; lastPast = pastAll; }
+    if (y !== lastY) { lastY = y; var max = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? y / max : 0).toFixed(4) + ')'; }
     requestAnimationFrame(frame);
   }
   measure();
@@ -718,8 +735,11 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.92;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-const DPR = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 1.75);
+const DEV = window.devicePixelRatio || 1;
+const lowEnd = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+let DPR = Math.min(DEV, mobile ? (lowEnd ? 1 : 1.3) : 1.5);
 renderer.setPixelRatio(DPR);
+renderer.shadowMap.autoUpdate = false;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 2500);
@@ -743,7 +763,7 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture
 const key = new THREE.DirectionalLight(0xffe2c6, 2.1);
 key.position.set(-90, 170, 120);
 key.castShadow = true;
-key.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
+key.shadow.mapSize.set(mobile ? 1024 : 1536, mobile ? 1024 : 1536);
 Object.assign(key.shadow.camera, { left: -95, right: 95, top: 120, bottom: -70, near: 20, far: 520 });
 key.shadow.bias = -0.0005; key.shadow.normalBias = 0.5;
 key.target.position.set(0, 30, 15);
@@ -758,7 +778,7 @@ const M = {
   slab: new THREE.MeshStandardMaterial({ color: 0xbdb8b0, roughness: 0.78, envMapIntensity: ENV }),
   col: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.78, envMapIntensity: ENV }),
   core: new THREE.MeshStandardMaterial({ color: 0xbdb8b0, roughness: 0.86, envMapIntensity: ENV }),
-  glass: new THREE.MeshPhysicalMaterial({ color: 0x9cc4ea, metalness: 0.15, roughness: 0.05, transparent: true, opacity: 0.3, envMapIntensity: 1.1, depthWrite: false, side: THREE.DoubleSide }),
+  glass: new THREE.MeshStandardMaterial({ color: 0x9cc4ea, metalness: 0.15, roughness: 0.05, transparent: true, opacity: 0.3, envMapIntensity: 1.1, depthWrite: false }),
   steel: new THREE.MeshStandardMaterial({ color: 0x262b33, metalness: 0.85, roughness: 0.34, envMapIntensity: 1 }),
   accent: new THREE.MeshStandardMaterial({ color: 0xff7a1a, metalness: 0.55, roughness: 0.32, emissive: 0xff5200, emissiveIntensity: 0.55, envMapIntensity: 1 }),
   foot: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8, envMapIntensity: ENV }),
@@ -1054,7 +1074,7 @@ function build() {
     tl.fromTo(S, Object.assign({}, a), Object.assign({}, b, { duration: Math.max(0.001, p1 - p0), ease: 'power1.inOut', immediateRender: false }), p0);
   }
   const end = stops[stops.length - 1][0];
-  st = ScrollTrigger.create({ start: 0, end, scrub: mobile ? 0.5 : 0.9, animation: tl });
+  st = ScrollTrigger.create({ start: 0, end, scrub: mobile ? true : 0.45, animation: tl });
   tl.progress(clamp((window.scrollY || 0) / end));
 }
 
@@ -1122,8 +1142,8 @@ function colorCols() {
 /* ================= post ================= */
 let composer = null, bloom = null;
 function setupComposer() {
-  if (mobile) return;
-  const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: 4 });
+  if (mobile || lowEnd) return;
+  const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: 2 });
   composer = new EffectComposer(renderer, rt);
   composer.addPass(new RenderPass(scene, camera));
   bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.42, 0.5, 1.05);
@@ -1138,7 +1158,8 @@ function resize() {
   mobile = matchMedia('(max-width: 900px)').matches;
   renderer.setSize(W, H, false);
   camera.aspect = W / H; camera.updateProjectionMatrix();
-  if (composer) { composer.setPixelRatio(DPR); composer.setSize(W, H); bloom.resolution.set(W / 2, H / 2); }
+  renderer.setPixelRatio(DPR); renderer.setSize(W, H, false);
+  if (composer) { composer.setPixelRatio(DPR); composer.setSize(W, H); bloom.resolution.set(W / 3, H / 3); }
 }
 resize();
 
@@ -1155,10 +1176,33 @@ if (finePointer) window.addEventListener('pointermove', e => { ptr.x = e.clientX
 
 /* ================= loop ================= */
 const clock = new THREE.Clock();
-let sig = '', fsig = '', csig = '';
+let sig = '', fsig = '', csig = '', gsig = '', vsig = '';
 const tgt = new THREE.Vector3();
+let frameNo = 0, idleSkip = 0, lastNow = performance.now(), acc = 0, accN = 0, level = 0, settleUntil = performance.now() + 4000;
+const SHADOWED = [];
+function setLevel(l) {
+  level = l;
+  if (l >= 1) { DPR = Math.min(DPR, 1.15); }
+  if (l >= 2 && composer) { composer = null; }
+  if (l >= 3) { DPR = 1; renderer.shadowMap.enabled = false; scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); }); }
+  resize();
+}
+const modalEl = document.getElementById('modal'), drawerEl = document.getElementById('drawer');
 function frame() {
+  if (modalEl.classList.contains('on') || drawerEl.classList.contains('on')) { lastNow = performance.now(); return; }
+  const now = performance.now(), dt = now - lastNow; lastNow = now; frameNo++;
+  /* adaptive quality: if frames run slow for ~1.5 s, step quality down */
+  if (now > settleUntil && !document.hidden && dt < 250) {
+    acc += dt; accN++;
+    if (accN >= 90) { const avg = acc / accN; acc = 0; accN = 0; if (avg > 22 && level < 3) { setLevel(level + 1); settleUntil = now + 1500; } }
+  }
   const t = clock.getElapsedTime();
+  const gs = [S.floors, I.floors, S.explode, S.twist, S.lift, S.footA, S.groups, S.beamA, S.beamDraw, S.cubeA, S.press, S.towerA].map(v => v.toFixed(3)).join();
+  const vs = gs + [S.az, S.el, S.dist, S.tx, S.ty, S.tz, S.sx, S.sy, I.az, I.zoom, S.scan, S.check, S.ghost, S.skin, ptr.x, ptr.y].map(v => v.toFixed(3)).join() + W + H;
+  const geomChanged = gs !== gsig; gsig = gs;
+  const moving = vs !== vsig || Math.abs(ptr.x - ptr.sx) + Math.abs(ptr.y - ptr.sy) > 0.002; vsig = vs;
+  if (!moving && frameNo > 120) { idleSkip = (idleSkip + 1) % 3; if (idleSkip) return; }
+  if (geomChanged || frameNo < 3) renderer.shadowMap.needsUpdate = true;
   const s1 = [S.floors, I.floors, S.explode, S.twist, S.lift].map(v => v.toFixed(4)).join();
   if (s1 !== sig) { sig = s1; layoutAll(); }
   const s2 = [S.footA, S.groups].map(v => v.toFixed(4)).join();

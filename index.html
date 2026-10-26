@@ -474,7 +474,6 @@ footer.plain { padding-bottom: 60px; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
 <script>
 /* ---------- Project details, demo modal, scroll chrome ---------- */
 (function () {
@@ -587,19 +586,7 @@ footer.plain { padding-bottom: 60px; }
   if (window.gsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
   var touchDev = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
   if (window.ScrollTrigger) ScrollTrigger.config({ ignoreMobileResize: true });
-  if (!reduce && !touchDev && window.Lenis && window.gsap) {
-    var lenis = new Lenis({ lerp: 0.14, smoothWheel: true, wheelMultiplier: 1.05 });
-    window.__lenis = lenis;
-    if (window.ScrollTrigger) lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add(function (t) { lenis.raf(t * 1000); });
-    gsap.ticker.lagSmoothing(0);
-    document.addEventListener('click', function (e) {
-      var a = e.target.closest ? e.target.closest('a[href^="#"]') : null; if (!a) return;
-      var id = a.getAttribute('href'); if (id.length < 2) { e.preventDefault(); lenis.scrollTo(0); return; }
-      var el = document.querySelector(id); if (!el) return;
-      e.preventDefault(); lenis.scrollTo(el, { offset: 0, duration: 1.6 });
-    });
-  }
+  /* scrolling is driven slide by slide below (no smooth-scroll library needed) */
 
   /* chapter text fades, HUD, progress bar */
   var chs = Array.prototype.map.call(document.querySelectorAll('.ch'), function (el) {
@@ -671,9 +658,9 @@ footer.plain { padding-bottom: 60px; }
   window.__measureText = measure;
   requestAnimationFrame(frame);
 
-  /* phones: reel-style paging. One swipe plays the animation and lands on the next key slide.
-     Swipes during the move are ignored, so fast repeated swipes still go one slide at a time.
-     Experience, Skills and Contact below the story scroll normally. */
+  /* reel-style paging (phones and laptops). One swipe, wheel flick or key press plays the animation
+     and lands on the next key slide. Input during a move is ignored, so repeated input still goes
+     one slide at a time. Experience, Skills and Contact below the story scroll normally. */
   var SNAP = { hero: [0], work: [0.72], gh: [0.44, 0.74], found: [0.44, 0.74], valid: [0.44, 0.74], beam: [0.44, 0.74], rha: [0.44, 0.74], next: [0.62] };
   var expEl = document.getElementById('experience');
   var slideCh = {};                                   /* y -> chapter name, to spot video pop-ups */
@@ -703,12 +690,54 @@ footer.plain { padding-bottom: 60px; }
     return best;
   }
   function blocked() { return modalEl.classList.contains('on') || drawer.classList.contains('on'); }
+  function inStory(dir) { var pts = keySlides(), last = pts[pts.length - 1], y = window.scrollY || 0; return y < last - 2 || (y <= last + 4 && dir < 0); }
+  function step(dir) {
+    var pts = keySlides(), y = window.scrollY || 0, i = currentIndex(pts, y);
+    var target = dir > 0 ? Math.min(pts.length - 1, (pts[i] > y + 2 ? i : i + 1)) : Math.max(0, (pts[i] < y - 2 ? i : i - 1));
+    /* 3D slide <-> its demo video in the same project: quick pop, no 3D story in between */
+    var a = slideCh[pts[i]], b = slideCh[pts[target]];
+    glideTo(pts[target], !!(a && a === b && SNAP[a].length > 1));
+  }
+  /* mouse wheel and trackpad */
+  var wheelLock = false, lastWheel = 0, wheelAcc = 0;
+  window.addEventListener('wheel', function (e) {
+    if (blocked() || e.ctrlKey) return;
+    var dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? window.innerHeight : 1);
+    if (Math.abs(e.deltaX) > Math.abs(dy)) return;
+    var now = performance.now(), gap = now - lastWheel; lastWheel = now;
+    if (!inStory(dy)) return;                                    /* reading sections: normal scrolling */
+    e.preventDefault();
+    if (paging) return;
+    if (wheelLock) { if (gap < 200) return; wheelLock = false; } /* ignore the trackpad's inertia tail */
+    if (gap > 300) wheelAcc = 0;
+    wheelAcc += dy;
+    if (Math.abs(wheelAcc) >= 20) { wheelLock = true; wheelAcc = 0; step(dy > 0 ? 1 : -1); }
+  }, { passive: false });
+  /* keyboard */
+  window.addEventListener('keydown', function (e) {
+    if (blocked() || e.altKey || e.ctrlKey || e.metaKey) return;
+    var tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'BUTTON' && e.key === ' ') return;
+    var dir = 0;
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) dir = 1;
+    else if (e.key === 'ArrowUp' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey)) dir = -1;
+    if (!dir || !inStory(dir)) return;
+    e.preventDefault();
+    if (!paging) step(dir);
+  });
+  /* menu links glide too */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null; if (!a) return;
+    var id = a.getAttribute('href'), y = 0;
+    if (id === '#work') { var pts = keySlides(); y = pts[1]; }
+    else if (id.length > 1) { var el = document.querySelector(id); if (!el) return; y = Math.round(el.getBoundingClientRect().top + (window.scrollY || 0)); }
+    e.preventDefault(); glideTo(y);
+  });
   window.addEventListener('touchstart', function (e) {
-    if (!phoneQ.matches || blocked() || e.touches.length > 1) { mode = 'free'; return; }
+    if (blocked() || e.touches.length > 1) { mode = 'free'; return; }
     yStart = e.touches[0].clientY; xStart = e.touches[0].clientX; tStart = performance.now(); mode = null;
   }, { passive: true });
   window.addEventListener('touchmove', function (e) {
-    if (mode === 'free' || !phoneQ.matches || blocked()) return;
+    if (mode === 'free' || blocked()) return;
     var dy = yStart - e.touches[0].clientY;                     /* + means the page should move down */
     if (mode === null) {
       if (Math.abs(dy) < 4) return;
@@ -724,16 +753,12 @@ footer.plain { padding-bottom: 60px; }
     var t = e.changedTouches[0], dy = yStart - t.clientY, dt = Math.max(1, performance.now() - tStart);
     if (Math.abs(dy) < 28 && Math.abs(dy) / dt < 0.35) return;    /* a tap, not a swipe */
     if (Math.abs(t.clientX - xStart) > Math.abs(dy) * 1.4) return; /* sideways gesture */
-    var pts = keySlides(), y = window.scrollY || 0, i = currentIndex(pts, y);
-    var target = dy > 0 ? Math.min(pts.length - 1, (pts[i] > y + 2 ? i : i + 1)) : Math.max(0, (pts[i] < y - 2 ? i : i - 1));
-    /* 3D slide <-> its demo video in the same project: quick pop, no 3D story in between */
-    var a = slideCh[pts[i]], b = slideCh[pts[target]];
-    glideTo(pts[target], !!(a && a === b && SNAP[a].length > 1));
+    step(dy > 0 ? 1 : -1);
   }, { passive: true });
   /* landing between slides (anchor link, rotation): settle onto the nearest one */
   var idleT = 0;
   window.addEventListener('scroll', function () {
-    if (paging || !phoneQ.matches) return;
+    if (paging) return;
     clearTimeout(idleT);
     idleT = setTimeout(function () {
       if (paging || mode || blocked()) return;
@@ -1167,7 +1192,7 @@ function build() {
     tl.fromTo(S, Object.assign({}, a), Object.assign({}, b, { duration: Math.max(0.001, p1 - p0), ease: 'power1.inOut', immediateRender: false }), p0);
   }
   const end = stops[stops.length - 1][0];
-  st = ScrollTrigger.create({ start: 0, end, scrub: touchDev ? true : 0.45, animation: tl });
+  st = ScrollTrigger.create({ start: 0, end, scrub: true, animation: tl });
   tl.progress(clamp((window.scrollY || 0) / end));
 }
 

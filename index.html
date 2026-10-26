@@ -8,508 +8,353 @@
 <meta property="og:title" content="Asrith Pothuri — Structural Engineer">
 <meta property="og:description" content="Four years of high-rise design, and the tools that automate it.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#06182f">
+<meta name="theme-color" content="#05070b">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/*
-  Layout: a blueprint sheet. One fixed WebGL tower sits on the right and is assembled by scrolling.
-  Content runs in a left lane (max 700px) so the part of the structure each tool touches stays visible.
-*/
 :root {
-  --ground: #0b2a4f;
-  --ground-deep: #06182f;
-  --line: #8fc1ee;
-  --chalk: #eef4fb;
-  --dim: #a9c0da;
-  --mark: #ffd24a;
-  --edge: rgba(143, 193, 238, 0.3);
-  --panel: rgba(6, 24, 47, 0.76);
+  --bg: #05070b;
+  --bg2: #0d1420;
+  --ink: #f3efe7;
+  --mute: #a3acba;
+  --soft: #6f7a8c;
+  --line: rgba(243, 239, 231, 0.16);
+  --accent: #ff7a1a;
+  --accent2: #ffc47a;
+  --ok: #7fe0b0;
+  --bad: #ff4a3a;
 
-  --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --display: "Archivo", "Arial Narrow", Arial, sans-serif;
   --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
-  --data: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 
-  --stage-h: 42vh;
-  --gutter: max(24px, env(safe-area-inset-left, 0px));
-  --gutter-r: max(24px, env(safe-area-inset-right, 0px));
+  --gx: clamp(20px, 5vw, 84px);
   color-scheme: dark;
 }
-
 * { box-sizing: border-box; }
-
 html { -webkit-text-size-adjust: 100%; }
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-stopped { overflow: hidden; }
-
 body {
-  margin: 0;
-  background-color: var(--ground-deep);
-  background-image: radial-gradient(120% 90% at 72% 28%, #10386a 0%, var(--ground) 42%, var(--ground-deep) 100%);
-  background-attachment: fixed;
-  color: var(--dim);
-  font-family: var(--body);
-  font-size: 16.5px;
-  line-height: 1.65;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  margin: 0; background: var(--bg); color: var(--mute);
+  font-family: var(--body); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; overflow-x: hidden;
 }
-body::before {
-  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(143, 193, 238, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(143, 193, 238, 0.06) 1px, transparent 1px);
-  background-size: 56px 56px;
-}
-
-#gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; display: block; }
-.no-gl #gl { display: none; }
-
-@supports (height: 1svh) { :root { --stage-h: 42svh; } }
-.stage { display: none; }
-main, footer { position: relative; z-index: 2; }
-
-h1, h2, h3 { margin: 0; color: var(--chalk); font-family: var(--display); text-wrap: balance; }
-h1 { font-size: clamp(2.6rem, 5.6vw, 5rem); font-weight: 700; font-stretch: 84%; line-height: 0.98; letter-spacing: -0.035em; }
-h2 { font-size: clamp(2rem, 3.8vw, 3.2rem); font-weight: 650; font-stretch: 88%; line-height: 1.05; letter-spacing: -0.03em; margin-bottom: 20px; }
-h3 { font-size: 1.55rem; font-weight: 650; font-stretch: 92%; line-height: 1.15; letter-spacing: -0.02em; }
+a { color: var(--ink); text-decoration: none; }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 p { margin: 0 0 1em; }
-a { color: var(--chalk); text-decoration: none; }
-:focus-visible { outline: 2px solid var(--mark); outline-offset: 3px; }
 
-.wrap { width: 100%; max-width: 1320px; margin: 0 auto; padding-inline: var(--gutter) var(--gutter-r); }
-.lane { max-width: 700px; }
+#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+.no-gl #gl { display: none; }
+.no-gl body { background: radial-gradient(90% 70% at 70% 35%, #1d2a3f, #0d1420 45%, #05070b); }
 
-/* NAV */
-.nav { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; right: 0; z-index: 60; transition: background .3s, border-color .3s; border-bottom: 1px solid transparent; }
-.nav.solid { background: rgba(6, 24, 47, 0.78); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom-color: var(--edge); }
-.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; gap: 24px; }
-.nav-logo { font-family: var(--display); font-weight: 700; font-stretch: 90%; font-size: 1.15rem; letter-spacing: -0.02em; color: var(--chalk); white-space: nowrap; }
-.nav-links { display: flex; gap: 30px; list-style: none; margin: 0 auto 0 56px; padding: 0; }
-.nav-links a { font-size: 0.92rem; color: var(--dim); transition: color .2s; }
-.nav-links a:hover { color: var(--chalk); }
-.nav-cta { font-size: 0.9rem; font-weight: 600; color: var(--ground-deep); background: var(--chalk); padding: 10px 18px; white-space: nowrap; display: inline-block; transition: background .2s; }
-.nav-cta:hover { background: var(--mark); }
-@media (max-width: 800px) { .nav-links { display: none; } }
-
-.progress { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 70; background: var(--mark); transform-origin: 0 50%; transform: scaleX(0); pointer-events: none; }
-
-/* BUTTONS */
-.btn {
-  display: inline-block; padding: 13px 22px; font-family: var(--body); font-size: 0.95rem; font-weight: 600;
-  color: var(--chalk); background: transparent; border: 1px solid var(--line); cursor: pointer;
-  transition: background .2s, color .2s, border-color .2s; will-change: transform;
+/* ---------- display type ---------- */
+.big {
+  margin: 0; color: var(--ink); font-family: var(--display); font-weight: 800; font-stretch: 64%;
+  text-transform: uppercase; letter-spacing: -0.012em; line-height: 0.88; text-wrap: balance;
 }
-.btn:hover { background: var(--chalk); color: var(--ground-deep); border-color: var(--chalk); }
-.btn-primary { background: var(--mark); border-color: var(--mark); color: var(--ground-deep); }
-.btn-primary:hover { background: var(--chalk); border-color: var(--chalk); }
-
-/* HERO */
-.hero { padding: 168px 0 72px; }
-.hero .lane { max-width: 780px; }
-.hero h1 { margin-bottom: 28px; }
-.w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.14em; margin-bottom: -0.14em; }
+.big em { font-style: normal; color: transparent; -webkit-text-stroke: 1.5px var(--ink); }
+h1.big { font-size: clamp(3rem, 6.2vw, 6.8rem); }
+h2.big { font-size: clamp(2.8rem, 6vw, 6.4rem); }
+.w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0.06em 0.02em 0.04em; margin: -0.06em -0.02em -0.04em; }
 .wi { display: inline-block; will-change: transform; }
-.hero-sub { font-size: 1.18rem; line-height: 1.6; color: var(--dim); max-width: 600px; margin-bottom: 36px; }
-.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 64px; }
 
-.dims { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px 36px; max-width: 620px; }
-.dim { position: relative; padding-top: 16px; border-top: 1px solid var(--line); }
-.dim::before, .dim::after { content: ""; position: absolute; top: -5px; width: 1px; height: 9px; background: var(--line); }
-.dim::before { left: 0; }
-.dim::after { right: 0; }
-.dim b { display: block; font-family: var(--display); font-weight: 650; font-stretch: 88%; font-size: 2.3rem; line-height: 1; letter-spacing: -0.03em; color: var(--chalk); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
-.dim span { display: block; font-size: 0.9rem; line-height: 1.45; color: var(--dim); }
+/* ---------- chrome ---------- */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; padding: max(18px, env(safe-area-inset-top)) var(--gx) 0; display: flex; align-items: center; gap: 28px; pointer-events: none; }
+.nav > * { pointer-events: auto; }
+.logo { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.14em; color: var(--ink); text-transform: uppercase; white-space: nowrap; }
+.logo b { color: var(--accent); font-weight: 500; }
+.links { display: flex; gap: 26px; margin: 0 auto; padding: 0; list-style: none; }
+.links a { font-size: 0.86rem; color: var(--mute); transition: color .2s; }
+.links a:hover { color: var(--ink); }
+.cta { font-size: 0.84rem; font-weight: 600; color: var(--bg); background: var(--ink); padding: 10px 18px; border-radius: 999px; white-space: nowrap; transition: background .2s; margin-left: auto; }
+.links + .cta { margin-left: 0; }
+.cta:hover { background: var(--accent); }
+@media (max-width: 860px) { .links { display: none; } }
 
-/* MARQUEE */
-.band { position: relative; z-index: 2; overflow: hidden; padding: 28px 0 40px; }
-.band-track { display: flex; width: max-content; white-space: nowrap; will-change: transform; }
-.band-track span {
-  font-family: var(--display); font-weight: 700; font-stretch: 80%; font-size: clamp(3.4rem, 10vw, 8.5rem);
-  letter-spacing: -0.035em; line-height: 1; padding-right: 0.5em;
-  color: transparent; -webkit-text-stroke: 1px rgba(238, 244, 251, 0.55);
-}
+.bar { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 60; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); }
 
-/* BLOCKS */
-.block { padding: 96px 0; }
-.lede { max-width: 600px; }
+.hud { position: fixed; z-index: 40; bottom: max(22px, env(safe-area-inset-bottom)); font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.08em; color: var(--mute); pointer-events: none; }
+.hud-l { left: var(--gx); display: flex; align-items: center; gap: 12px; }
+.hud-l i { display: block; width: 1px; height: 34px; background: var(--line); position: relative; overflow: hidden; }
+.hud-l i::after { content: ""; position: absolute; left: 0; top: -40%; width: 1px; height: 40%; background: var(--ink); animation: drip 1.8s cubic-bezier(.6,0,.2,1) infinite; }
+@keyframes drip { to { top: 100%; } }
+.hud-r { right: var(--gx); text-align: right; }
+.hud-r b { color: var(--ink); font-weight: 500; }
+.hud-r span { display: block; color: var(--soft); margin-top: 4px; }
 
-/* SHEETS (projects) */
-.work-intro { margin-bottom: 56px; }
-.sheet { position: relative; background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--edge); margin-bottom: 72px; transition: border-color .3s; }
-.sheet:hover { border-color: var(--line); }
-.sheet-head { padding: 28px 28px 22px; border-bottom: 1px solid var(--edge); }
-.sheet-head h3 { margin-bottom: 14px; }
-.tags { display: flex; gap: 8px; flex-wrap: wrap; }
-.tag { font-family: var(--data); font-size: 0.74rem; color: var(--line); border: 1px solid var(--edge); padding: 3px 10px; white-space: nowrap; }
-.sheet-body { padding: 26px 28px 28px; display: grid; gap: 20px; }
-.row { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 20px; align-items: start; }
-.row-label { font-family: var(--data); font-size: 0.78rem; color: var(--line); padding-top: 4px; }
-.row-content { font-size: 0.97rem; line-height: 1.7; color: var(--dim); min-width: 0; }
-.row-metric { font-family: var(--data); font-weight: 500; color: var(--mark); }
+/* ---------- chapters ---------- */
+main { position: relative; z-index: 2; }
+.ch { position: relative; }
+.ch-stick { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; }
+@supports (height: 100svh) { .ch-stick { height: 100svh; } }
+.ch-text { width: min(600px, 46vw); margin-left: var(--gx); will-change: opacity, transform; }
+.ch[data-ch="hero"] .ch-text { width: min(900px, 60vw); }
+.num { display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.1em; color: var(--mute); text-transform: uppercase; margin-bottom: 22px; }
+.num b { color: var(--accent); font-weight: 500; }
+.num i { width: 38px; height: 1px; background: var(--line); }
+.line { font-size: 1.08rem; line-height: 1.6; color: var(--mute); max-width: 520px; margin: 24px 0 0; }
+.line strong, .m { color: var(--ink); font-weight: 500; }
+.m { font-family: var(--mono); font-size: 0.95em; color: var(--accent2); }
+.hero-sub { font-size: 1.12rem; max-width: 560px; margin: 28px 0 32px; }
+.btns { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 13px 22px; border-radius: 999px; font-size: 0.92rem; font-weight: 600; color: var(--ink); border: 1px solid var(--line); background: rgba(5,7,11,.35); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: #140800; }
+.btn.pri:hover { background: var(--ink); border-color: var(--ink); }
 
-.project-media {
-  display: block; width: 100%; padding: 0; border: 0; border-top: 1px solid var(--edge); border-bottom: 1px solid var(--edge);
-  background: #05101f; cursor: pointer; position: relative; overflow: hidden; line-height: 0; aspect-ratio: 16 / 9;
-}
-.project-media img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .6s cubic-bezier(.2,.7,.2,1); color: transparent; font-size: 0; max-width: 100%; }
-.project-media:hover img { transform: scale(1.03); }
-.project-media::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(5,16,31,0) 62%, rgba(5,16,31,.55) 100%); }
-.play-btn {
-  position: absolute; left: 20px; bottom: 18px; z-index: 2; display: inline-flex; align-items: center; gap: 10px;
-  font-family: var(--body); font-size: 0.88rem; font-weight: 600; line-height: 1.2;
-  background: var(--mark); color: var(--ground-deep); padding: 11px 18px; transition: background .2s;
-}
-.project-media:hover .play-btn { background: var(--chalk); }
-.play-btn svg { width: 9px; height: 11px; flex: none; }
+.acts { display: flex; align-items: center; gap: 26px; margin-top: 30px; flex-wrap: wrap; }
+.play { display: inline-flex; align-items: center; gap: 14px; background: none; border: 0; padding: 0; color: var(--ink); cursor: pointer; font-size: 0.92rem; font-weight: 600; }
+.play i { position: relative; width: 58px; height: 58px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+.play i::before { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 1px solid rgba(243,239,231,.25); }
+.play i svg { width: 12px; height: 14px; margin-left: 3px; }
+.play:hover i { transform: scale(1.08); background: var(--accent); }
+.more { background: none; border: 0; padding: 4px 0; color: var(--mute); cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--line); transition: color .2s, border-color .2s; }
+.more:hover { color: var(--ink); border-color: var(--ink); }
 
-details.more summary {
-  list-style: none; cursor: pointer; padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  font-size: 0.92rem; font-weight: 600; color: var(--chalk);
-}
-details.more summary::-webkit-details-marker { display: none; }
-details.more summary::after { content: "+"; font-family: var(--data); font-size: 1.1rem; color: var(--line); }
-details.more[open] summary::after { content: "–"; }
-details.more summary:hover { color: var(--mark); }
-details.more .inner { padding: 0 28px 24px; font-size: 0.95rem; line-height: 1.75; color: var(--dim); }
-details.more .inner p:last-child { margin-bottom: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+.tag { font-family: var(--mono); font-size: 0.7rem; color: var(--mute); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
 
-/* NEXT */
-.next { margin-top: 24px; border: 1px dashed var(--edge); background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 28px; }
-.next h3 { font-size: 1.3rem; margin-bottom: 4px; }
-.next .note { font-size: 0.9rem; color: var(--line); margin-bottom: 18px; }
-.next ul { list-style: none; margin: 0; padding: 0; }
-.next li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 20px; padding: 16px 0; border-top: 1px solid var(--edge); font-size: 0.95rem; line-height: 1.7; }
-.next li b { font-family: var(--display); font-weight: 650; font-stretch: 92%; color: var(--mark); font-size: 1rem; }
+/* live readouts */
+.live { margin-top: 26px; display: grid; gap: 12px; max-width: 420px; font-family: var(--mono); font-size: 0.78rem; color: var(--mute); }
+.knob { display: grid; grid-template-columns: 74px 1fr 64px; align-items: center; gap: 12px; }
+.knob .tr { height: 4px; border-radius: 4px; background: rgba(243,239,231,.12); position: relative; }
+.knob .tr span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--accent); width: var(--v, 0%); }
+.knob .tr span::after { content: ""; position: absolute; right: -7px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 4px rgba(255,122,26,.25); }
+.knob b { color: var(--ink); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+.stat { display: flex; align-items: baseline; gap: 16px; margin-top: 26px; }
+.stat b { font-family: var(--display); font-weight: 800; font-stretch: 70%; font-size: clamp(3.4rem, 6vw, 5.6rem); line-height: .85; color: var(--ink); font-variant-numeric: tabular-nums; }
+.stat span { font-family: var(--mono); font-size: 0.76rem; letter-spacing: .06em; text-transform: uppercase; color: var(--mute); max-width: 180px; line-height: 1.5; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 22px; max-width: 470px; }
+.chips span { font-family: var(--mono); font-size: 0.74rem; color: var(--ink); background: rgba(243,239,231,.08); border: 1px solid var(--line); padding: 5px 11px; border-radius: 999px; }
 
-/* EXPERIENCE */
-.exp { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 36px; padding: 32px 0; border-top: 1px solid var(--edge); }
-.exp:last-child { border-bottom: 1px solid var(--edge); }
-.exp-meta { font-family: var(--data); font-size: 0.8rem; line-height: 1.7; color: var(--line); }
-.exp-role { font-family: var(--display); font-weight: 650; font-stretch: 92%; font-size: 1.3rem; letter-spacing: -0.015em; color: var(--chalk); margin-bottom: 8px; }
-.exp p { font-size: 0.97rem; line-height: 1.7; margin: 0; }
+.dims { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 32px; margin-top: 34px; max-width: 540px; }
+.dim { border-top: 1px solid var(--line); padding-top: 12px; }
+.dim b { display: block; font-family: var(--display); font-weight: 800; font-stretch: 70%; font-size: 2.6rem; line-height: 1; color: var(--ink); margin-bottom: 6px; }
+.dim span { font-size: 0.86rem; line-height: 1.45; }
 
-/* SKILLS */
-.skills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 40px; }
-.skill { border-top: 1px solid var(--line); padding-top: 16px; min-width: 0; }
-.skill h3 { font-size: 1.1rem; margin-bottom: 8px; }
-.skill p { font-size: 0.93rem; line-height: 1.7; margin: 0; }
+.dev { list-style: none; padding: 0; margin: 26px 0 0; max-width: 560px; }
+.dev li { display: grid; grid-template-columns: 120px 1fr; gap: 18px; padding: 14px 0; border-top: 1px solid var(--line); font-size: 0.93rem; line-height: 1.6; }
+.dev li b { font-family: var(--display); font-stretch: 70%; font-weight: 750; font-size: 1.15rem; text-transform: uppercase; color: var(--accent2); }
 
-/* FOOTER */
-footer { padding: 110px 0 44px; }
-.foot-links { display: grid; gap: 10px; margin: 44px 0 0; }
-.foot-links a { font-family: var(--data); font-size: 0.85rem; color: var(--dim); width: fit-content; border-bottom: 1px solid var(--edge); transition: color .2s, border-color .2s; }
-.foot-links a:hover { color: var(--mark); border-color: var(--mark); }
-.foot-bottom { margin-top: 64px; padding-top: 22px; border-top: 1px solid var(--edge); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px 28px; font-family: var(--data); font-size: 0.76rem; color: var(--dim); }
+/* 3D callouts */
+.callouts { position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.co { position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 0.72rem; line-height: 1.4; color: var(--ink); white-space: nowrap; opacity: 0; padding: 6px 10px 6px 14px; border-left: 2px solid var(--bad); background: rgba(5,7,11,.72); }
+.co small { display: block; color: var(--bad); font-size: 0.66rem; letter-spacing: .08em; }
 
-/* GAUGE */
-.gauge { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); height: min(54vh, 440px); width: 120px; z-index: 5; display: none; pointer-events: none; }
-@media (min-width: 1100px) { .gauge { display: block; } }
-.gauge-track { position: absolute; right: 0; top: 0; bottom: 0; width: 10px; border-right: 1px solid var(--line); background: repeating-linear-gradient(to top, rgba(143,193,238,.6) 0 1px, transparent 1px calc(100% / 24)); }
-.gauge-mark { position: absolute; right: 0; left: 0; height: 0; bottom: var(--p, 0%); }
-.gauge-mark::after { content: ""; position: absolute; right: 0; bottom: -1px; width: 24px; height: 2px; background: var(--mark); }
-.gauge-mark span { position: absolute; right: 32px; bottom: -9px; font-family: var(--data); font-size: 0.72rem; color: var(--mark); white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* ---------- plain sections ---------- */
+.plain { position: relative; padding: 150px 0 120px; }
+.plain::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(5,7,11,.94) 0, rgba(5,7,11,.86) 44%, rgba(5,7,11,0) 74%); }
+.col { width: min(720px, 54vw); margin-left: var(--gx); }
+.plain h2.big { margin-bottom: 40px; }
+.exp { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 30px; padding: 28px 0; border-top: 1px solid var(--line); }
+.exp:last-child { border-bottom: 1px solid var(--line); }
+.exp-meta { font-family: var(--mono); font-size: 0.76rem; line-height: 1.7; color: var(--soft); }
+.exp-role { font-family: var(--display); font-weight: 750; font-stretch: 72%; font-size: 1.5rem; text-transform: uppercase; color: var(--ink); margin-bottom: 6px; line-height: 1.05; }
+.exp p { font-size: 0.95rem; margin: 0; }
+.skills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 40px; }
+.skill { border-top: 1px solid var(--line); padding-top: 14px; }
+.skill h3 { margin: 0 0 6px; font-family: var(--display); font-weight: 750; font-stretch: 72%; font-size: 1.3rem; text-transform: uppercase; color: var(--ink); }
+.skill p { font-size: 0.92rem; margin: 0; }
+footer.plain { padding-bottom: 60px; }
+.foot-links { display: grid; gap: 10px; margin-top: 40px; }
+.foot-links a { font-family: var(--mono); font-size: 0.84rem; color: var(--mute); width: fit-content; border-bottom: 1px solid var(--line); }
+.foot-links a:hover { color: var(--accent); border-color: var(--accent); }
+.foot-bottom { margin-top: 80px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px 28px; font-family: var(--mono); font-size: 0.72rem; color: var(--soft); }
 
-/* CURSOR */
-.cursor { position: fixed; left: 0; top: 0; z-index: 100; pointer-events: none; opacity: 0; transition: opacity .3s; }
-.cursor.on { opacity: 1; }
-.cursor i { position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; border: 1px solid rgba(238,244,251,.8); border-radius: 50%; transition: transform .25s cubic-bezier(.2,.7,.2,1), background .25s, border-color .25s; }
-.cursor.hot i { transform: scale(1.7); background: rgba(255,210,74,.16); border-color: var(--mark); }
+/* ---------- drawer ---------- */
+.drawer { position: fixed; z-index: 80; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); background: #0a0e15; border-left: 1px solid var(--line); transform: translateX(102%); transition: transform .55s cubic-bezier(.2,.7,.2,1); overflow-y: auto; overscroll-behavior: contain; }
+.drawer.on { transform: none; }
+.shade { position: fixed; inset: 0; z-index: 79; background: rgba(2,3,6,.6); opacity: 0; pointer-events: none; transition: opacity .4s; }
+.shade.on { opacity: 1; pointer-events: auto; }
+.dr-top { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 18px 26px; background: rgba(10,14,21,.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 0.74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); z-index: 2; }
+.x { background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 7px 14px; cursor: pointer; font-size: 0.82rem; }
+.x:hover { background: var(--ink); color: var(--bg); }
+.dr-body { padding: 26px 26px 50px; }
+.dr-body h3 { margin: 0 0 6px; font-family: var(--display); font-weight: 800; font-stretch: 66%; font-size: 2.6rem; line-height: .92; text-transform: uppercase; color: var(--ink); }
+.poster { display: block; position: relative; width: 100%; aspect-ratio: 16/9; margin: 22px 0 6px; padding: 0; border: 1px solid var(--line); background: #000; cursor: pointer; overflow: hidden; border-radius: 10px; }
+.poster img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.poster:hover img { transform: scale(1.03); }
+.poster span { position: absolute; left: 14px; bottom: 14px; display: inline-flex; align-items: center; gap: 8px; background: var(--ink); color: var(--bg); border-radius: 999px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; }
+.poster span svg { width: 9px; height: 11px; }
+.dr-row { padding: 18px 0; border-bottom: 1px solid var(--line); }
+.dr-row h4 { margin: 0 0 6px; font-family: var(--mono); font-weight: 500; font-size: 0.72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent2); }
+.dr-row p { font-size: 0.95rem; line-height: 1.7; margin: 0 0 .8em; }
+.dr-row p:last-child { margin-bottom: 0; }
 
-/* 3D LABELS */
-.tags3d { position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
-.t3 { position: absolute; left: 0; top: 0; font-family: var(--data); font-size: 0.68rem; line-height: 1; color: var(--chalk); white-space: nowrap; opacity: 0; will-change: transform, opacity; text-shadow: 0 0 8px #06182f; }
-.t3.l { padding-right: 12px; color: var(--dim); }
-
-/* MODAL */
-.modal { position: fixed; inset: 0; z-index: 90; display: none; background: rgba(4, 12, 24, .95); padding: 24px; align-items: center; justify-content: center; }
+.modal { position: fixed; inset: 0; z-index: 90; display: none; background: rgba(2,3,6,.95); padding: 24px; align-items: center; justify-content: center; }
 .modal.on { display: flex; }
-.modal .box { width: 100%; max-width: 1020px; }
-.modal .bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 12px; }
-.modal .ttl { font-family: var(--data); font-size: 0.82rem; color: var(--chalk); }
-.modal .x { font-family: var(--body); font-size: 0.85rem; font-weight: 600; color: var(--chalk); background: transparent; border: 1px solid var(--edge); padding: 8px 15px; cursor: pointer; transition: all .2s; }
-.modal .x:hover { background: var(--chalk); color: var(--ground-deep); }
-.modal video { width: 100%; height: auto; display: block; background: #000; }
+.modal .box { width: 100%; max-width: 1100px; }
+.modal .mbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 12px; font-family: var(--mono); font-size: 0.8rem; color: var(--ink); }
+.modal video { width: 100%; height: auto; display: block; background: #000; border-radius: 8px; }
 
-/* DESKTOP: keep the lane left so the tower stays visible */
-@media (min-width: 1000px) {
-  .block .lane { width: min(100%, 700px); }
-}
+/* ---------- loader ---------- */
+.loader { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 0 var(--gx) max(28px, env(safe-area-inset-bottom)); transition: opacity .7s, visibility .7s; }
+.loader.done { opacity: 0; visibility: hidden; }
+.loader .ln { font-family: var(--display); font-weight: 800; font-stretch: 64%; text-transform: uppercase; color: var(--ink); font-size: clamp(2.4rem, 7vw, 6rem); line-height: .9; }
+.loader .pc { font-family: var(--mono); color: var(--accent); font-size: 0.9rem; }
 
-/* MOBILE */
+/* ---------- mobile ---------- */
 @media (max-width: 900px) {
-  .tags3d { display: none; }
-  .gauge { display: block; top: auto; bottom: max(14px, env(safe-area-inset-bottom, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); transform: none; height: auto; width: auto; z-index: 6; }
-  .gauge-track { display: none; }
-  .gauge-mark { position: static; height: auto; }
-  .gauge-mark::after { display: none; }
-  .gauge-mark span { position: static; }
-  .gauge-mark span { background: rgba(6,24,47,.85); border: 1px solid var(--edge); padding: 3px 8px; }
-  .hero { padding: 120px 0 48px; }
-  .block { padding: 72px 0; }
-  .sheet { background: rgba(6, 24, 47, 0.62); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); margin-bottom: 64px; }
-  .next { background: rgba(6, 24, 47, 0.62); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); }
-  .next li b { text-shadow: 0 0 8px rgba(6,24,47,.95); }
-  .hero-sub, .dim span, .lede, .row-content, .exp p, .skill p, .next li, .inner p, footer p { text-shadow: 0 0 10px rgba(6,24,47,.95), 0 0 3px rgba(6,24,47,.95); }
-  .sheet-head h3, h1, h2, .exp-role { text-shadow: 0 0 14px rgba(6,24,47,.9); }
-  .row { grid-template-columns: 1fr; gap: 4px; }
-  .sheet-head, .sheet-body { padding-left: 20px; padding-right: 20px; }
-  details.more summary { padding-left: 20px; padding-right: 20px; }
-  details.more .inner { padding-left: 20px; padding-right: 20px; }
-  .next li { grid-template-columns: 1fr; gap: 4px; }
-  .exp { grid-template-columns: 1fr; gap: 10px; }
-  .skills { grid-template-columns: 1fr; }
-  .dims { gap: 28px 24px; }
+  body { font-size: 15px; }
+  .ch-stick { align-items: flex-end; }
+  .ch-stick::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 66%; pointer-events: none; opacity: var(--o, 1); background: linear-gradient(to top, rgba(5,7,11,.96) 0, rgba(5,7,11,.9) 42%, rgba(5,7,11,0) 100%); }
+  .ch-text, .ch[data-ch="hero"] .ch-text { position: relative; width: 100%; margin: 0; padding: 0 20px calc(64px + env(safe-area-inset-bottom)); }
+  h1.big { font-size: clamp(2.3rem, 10.6vw, 3.4rem); }
+  h2.big { font-size: clamp(2.3rem, 11.4vw, 3.4rem); }
+  .num { margin-bottom: 14px; font-size: 0.68rem; }
+  .line { font-size: 0.96rem; margin-top: 14px; }
+  .hero-sub { font-size: 0.98rem; margin: 16px 0 20px; }
+  .btn { padding: 11px 17px; font-size: 0.86rem; }
+  .acts { margin-top: 20px; gap: 22px; }
+  .play i { width: 48px; height: 48px; }
+  .live { margin-top: 18px; }
+  .stat { margin-top: 16px; }
+  .stat b { font-size: 3.2rem; }
+  .dims { gap: 16px 22px; margin-top: 20px; }
+  .dim b { font-size: 1.9rem; }
+  .dim span { font-size: 0.78rem; }
+  .tags { display: none; }
+  .chips { margin-top: 14px; }
+  .dev { margin-top: 14px; }
+  .dev li { grid-template-columns: 1fr; gap: 2px; padding: 10px 0; font-size: 0.86rem; }
+  .hud-l { display: none; }
+  .hud-r span { display: none; }
+  .plain { padding: 110px 0 90px; }
+  .plain::before { background: rgba(5,7,11,.86); }
+  .col { width: auto; margin: 0 20px; }
+  .exp { grid-template-columns: 1fr; gap: 8px; }
+  .skills { grid-template-columns: 1fr; gap: 24px; }
+  .co { font-size: 0.64rem; }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
-  .band-track { transform: none !important; }
+  .hud-l i::after { animation: none; }
 }
 </style>
 </head>
 <body>
-
-<div class="progress" id="progress"></div>
+<div class="loader" id="loader" aria-hidden="true"><div class="ln">Asrith<br>Pothuri</div><div class="pc" id="pc">000</div></div>
 <canvas id="gl" aria-hidden="true"></canvas>
-<div class="tags3d" id="tags3d" aria-hidden="true"></div>
-<div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
+<div class="callouts" id="callouts" aria-hidden="true">
+  <div class="co" id="co1"><small>MISMATCH</small>C 900×600 · actual 600×900</div>
+  <div class="co" id="co2"><small>MISMATCH</small>Name ≠ section geometry</div>
+</div>
+<div class="bar" id="bar"></div>
 
-<aside class="gauge" aria-hidden="true">
-  <div class="gauge-track"></div>
-  <div class="gauge-mark" id="gMark"><span id="gText">L00  +0.0 m</span></div>
-</aside>
-
-<nav class="nav" id="nav">
-  <div class="wrap">
-    <a class="nav-logo" href="#top">Asrith Pothuri</a>
-    <ul class="nav-links">
-      <li><a href="#work">Work</a></li>
-      <li><a href="#experience">Experience</a></li>
-      <li><a href="#skills">Skills</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
-    <a class="nav-cta" href="mailto:asrithpothuri@gmail.com">Get in touch</a>
-  </div>
+<nav class="nav">
+  <a class="logo" href="#top">Asrith <b>/</b> Pothuri</a>
+  <ul class="links">
+    <li><a href="#work">Work</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a class="cta" href="mailto:asrithpothuri@gmail.com">Get in touch</a>
 </nav>
 
-<main>
+<div class="hud hud-l" aria-hidden="true"><i></i>Scroll</div>
+<div class="hud hud-r" aria-hidden="true"><b id="hudN">01</b> / 08<span id="hudT">Structural engineer</span></div>
 
-<header class="hero" id="top">
-  <div class="wrap">
-    <div class="lane">
-      <h1 id="heroTitle">Structural engineer building the tools that automate design.</h1>
+<main>
+  <section class="ch" data-ch="hero" id="top" style="height:150vh">
+    <div class="ch-stick"><div class="ch-text">
+      <div class="num"><b>01</b><i></i>Structural engineer · Bangalore</div>
+      <h1 class="big" id="heroTitle">Structural engineer building the tools that <em>automate design.</em></h1>
       <p class="hero-sub">Four years designing high-rise buildings taught me where the hours go. I build Python and API automation for ETABS, Revit, and AutoCAD — turning manual design work into repeatable processes.</p>
-      <div class="hero-cta">
-        <a class="btn btn-primary" href="#work">See the work</a>
+      <div class="btns">
+        <a class="btn pri" href="#work">See the work</a>
         <a class="btn" href="files/Asrith-Pothuri-Resume.pdf">Download resume</a>
         <a class="btn" href="https://github.com/asrith-09">GitHub</a>
       </div>
+    </div></div>
+  </section>
+
+  <section class="ch" data-ch="work" id="work" style="height:220vh">
+    <div class="ch-stick"><div class="ch-text">
+      <div class="num"><b>02</b><i></i>The work</div>
+      <h2 class="big">Five problems solved, <em>each with code.</em></h2>
+      <p class="line">Every tool below runs against real models. Each one came out of a live project where I watched hours go into something that should have been automatic.</p>
       <div class="dims">
         <div class="dim"><b>4+</b><span>Years high-rise RCC &amp; steel design</span></div>
         <div class="dim"><b>1,000+</b><span>Sections audited in 30 seconds</span></div>
         <div class="dim"><b>40 → 15</b><span>Columns resolved into footing groups</span></div>
         <div class="dim"><b>5</b><span>Tools built and run on real models</span></div>
       </div>
-    </div>
-  </div>
-</header>
+    </div></div>
+  </section>
 
-<div class="band" aria-hidden="true">
-  <div class="band-track" id="bandTrack">
-    <span>ETABS / Revit API / AutoCAD / Grasshopper / Python / MCP /</span>
-    <span>ETABS / Revit API / AutoCAD / Grasshopper / Python / MCP /</span>
-  </div>
-</div>
-
-<section class="block" id="work">
-  <div class="wrap">
-    <div class="lane">
-      <div class="work-intro">
-        <h2>Five problems solved, each with code.</h2>
-        <p class="lede">Every tool below runs against real models. Each one came out of a live project where I watched hours go into something that should have been automatic. Press play on any card to watch it run.</p>
+  <section class="ch" data-ch="gh" style="height:260vh">
+    <div class="ch-stick"><div class="ch-text">
+      <div class="num"><b>03</b><i></i>Rhino · Grasshopper · LLM</div>
+      <h2 class="big">Grasshopper <em>AI Assistant</em></h2>
+      <p class="line">A twisted tower built from one sentence, then changed to <span class="m">12 floors and a 15° twist in 38 seconds</span> by updating two sliders instead of rebuilding.</p>
+      <div class="live">
+        <div class="knob"><span>Floors</span><div class="tr"><span id="kF"></span></div><b id="vF">28</b></div>
+        <div class="knob"><span>Twist</span><div class="tr"><span id="kT"></span></div><b id="vT">0°</b></div>
       </div>
+      <div class="acts"><button class="play" data-p="gh"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Watch demo</button><button class="more" data-d="gh">Read the details +</button></div>
+    </div></div>
+  </section>
 
-      <article class="sheet" data-k="gh">
-        <div class="sheet-head">
-          <h3>Grasshopper AI Assistant</h3>
-          <div class="tags"><span class="tag">Python</span><span class="tag">Rhino &amp; Grasshopper</span><span class="tag">LLM agents</span><span class="tag">MCP</span></div>
-        </div>
-        <div class="sheet-body">
-          <div class="row">
-            <div class="row-label">Problem</div>
-            <div class="row-content">Building or reading a Grasshopper definition takes Grasshopper fluency, so most engineers never open parametric tools, and the definitions that do exist are hard for anyone else to change.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Solution</div>
-            <div class="row-content">A desktop assistant connected to a live Rhino session. It turns a plain-language request into a wired definition built from native components, edits an existing definition in place, and explains selected components step by step.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Impact</div>
-            <div class="row-content">A twisted tower built from one sentence, then changed to <span class="row-metric">12 floors and a 15° twist in 38 seconds</span> by updating two sliders instead of rebuilding.</div>
-          </div>
-        </div>
-        <button class="project-media" data-src="demos/demo-grasshopper-ai-assistant.mp4" data-title="Grasshopper AI Assistant">
-          <img src="demos/poster-grasshopper-ai-assistant.jpg" width="1600" height="900" loading="lazy" alt="Grasshopper definition for a twisted tower beside the assistant's build summary.">
-          <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
-        </button>
-        <details class="more">
-          <summary>How it works</summary>
-          <div class="inner">
-            <p>A small Rhino plugin starts with Rhino and serves a local Model Context Protocol endpoint, so the assistant drives Rhino and Grasshopper directly without depending on a third-party server. The model plans the definition first, then the plan is compiled into native components and wires on the canvas.</p>
-            <p>Every build is checked twice before it is handed back: the solution is read for errors and warnings, and a viewport capture is compared against the request. Edits change the existing components rather than adding a second copy, and each build can be undone in one step.</p>
-          </div>
-        </details>
-      </article>
+  <section class="ch" data-ch="found" style="height:240vh">
+    <div class="ch-stick"><div class="ch-text">
+      <div class="num"><b>04</b><i></i>Python · ETABS API · IS 456</div>
+      <h2 class="big">ETABS Foundation <em>Auto Tool</em></h2>
+      <p class="line">Reads column reactions, sizes isolated footings against safe bearing capacity, groups them within a set tolerance, and builds the footing geometry back into ETABS.</p>
+      <div class="stat"><b id="vG">40</b><span>footing types<br>from 40 columns</span></div>
+      <div class="acts"><button class="play" data-p="found"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Watch demo</button><button class="more" data-d="found">Read the details +</button></div>
+    </div></div>
+  </section>
 
-      <article class="sheet" data-k="found">
-        <div class="sheet-head">
-          <h3>ETABS Foundation Auto Tool</h3>
-          <div class="tags"><span class="tag">Python</span><span class="tag">ETABS API</span><span class="tag">IS 456</span></div>
-        </div>
-        <div class="sheet-body">
-          <div class="row">
-            <div class="row-label">Problem</div>
-            <div class="row-content">Foundation sizing is a spreadsheet loop: pull reactions, size against bearing capacity, check shear, group repeats, then model every footing by hand.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Solution</div>
-            <div class="row-content">Reads column reactions and the selected load combinations, sizes isolated footings against safe bearing capacity, groups them within a set tolerance, and builds the footing geometry back into ETABS.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Impact</div>
-            <div class="row-content">Resolved <span class="row-metric">40 columns into 15 footing groups</span> on the demonstration model, cross-checked against manual calculations.</div>
-          </div>
-        </div>
-        <button class="project-media" data-src="demos/demo-foundation-auto-tool.mp4" data-title="ETABS Foundation Auto Tool">
-          <img src="demos/poster-foundation-auto-tool.jpg" width="1600" height="900" loading="lazy" alt="Foundation Auto Tool showing a generated footing schedule.">
-          <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
-        </button>
-        <details class="more">
-          <summary>How it works</summary>
-          <div class="inner">
-            <p>Reactions are pulled per column for each selected combination, and the governing case drives the sizing. Footings are sized against the entered safe bearing capacity, then checked for punching shear and one-way shear before a size is accepted.</p>
-            <p>Grouping runs on a tolerance the engineer sets. Footings within that band collapse into a single type, which is what keeps a schedule buildable rather than forty bespoke sizes. Geometry is then written back through the ETABS API rather than modelled by hand.</p>
-          </div>
-        </details>
-      </article>
+  <section class="ch" data-ch="valid" style="height:240vh">
+    <div class="ch-stick"><div class="ch-text">
+      <div class="num"><b>05</b><i></i>Python · ETABS API · Excel</div>
+      <h2 class="big">ETABS Property <em>Validator</em></h2>
+      <p class="line">Audits every frame, wall, and slab section against its assigned name. Caught two frame mismatches that had passed visual review.</p>
+      <div class="stat"><b id="vS">0</b><span>sections checked<br>in under 30 s</span></div>
+      <div class="acts"><button class="play" data-p="valid"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Watch demo</button><button class="more" data-d="valid">Read the details +</button></div>
+    </div></div>
+  </section>
 
-      <article class="sheet" data-k="valid">
-        <div class="sheet-head">
-          <h3>ETABS Property Validator</h3>
-          <div class="tags"><span class="tag">Python</span><span class="tag">ETABS API</span><span class="tag">Excel</span></div>
-        </div>
-        <div class="sheet-body">
-          <div class="row">
-            <div class="row-label">Problem</div>
-            <div class="row-content">Section names drift from geometry as models are edited. A frame called C 900×600 that is actually 600×900 analyses fine and fails review late.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Solution</div>
-            <div class="row-content">Audits every frame, wall, and slab section against its assigned name. Exports a report isolating mismatches with named and actual dimensions side by side.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Impact</div>
-            <div class="row-content">Processes <span class="row-metric">1,000+ sections in under 30 seconds</span>. Caught two frame mismatches that had passed visual review.</div>
-          </div>
-        </div>
-        <button class="project-media" data-src="demos/demo-etabs-property-validator.mp4" data-title="ETABS Property Validator">
-          <img src="demos/poster-etabs-property-validator.jpg" width="1600" height="900" loading="lazy" alt="ETABS Property Validator showing validation results.">
-          <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
-        </button>
-        <details class="more">
-          <summary>How it works</summary>
-          <div class="inner">
-            <p>Section names carry the intent — dimensions, grade, sometimes a type prefix. The tool parses that intent out of the name, reads the actual geometric properties through the API, and compares the two.</p>
-            <p>Names that cannot be parsed are reported separately rather than silently passed, because a section the checker cannot read is exactly the one worth a human look. Output is an Excel workbook split by element type with a dedicated mismatches sheet.</p>
-          </div>
-        </details>
-      </article>
+  <section class="ch" data-ch="beam" style="height:260vh">
+    <div class="ch-stick"><div class="ch-text">
+      <div class="num"><b>06</b><i></i>Python · AutoCAD · Excel</div>
+      <h2 class="big">Excel to AutoCAD <em>Beam Schedule</em></h2>
+      <p class="line">Reads a reinforcement schedule from Excel and draws dimensioned beam elevations directly in AutoCAD, with rebar callouts, hooks, beam marks, layers, and annotation applied automatically.</p>
+      <div class="acts"><button class="play" data-p="beam"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Watch demo</button><button class="more" data-d="beam">Read the details +</button></div>
+    </div></div>
+  </section>
 
-      <article class="sheet" data-k="beam">
-        <div class="sheet-head">
-          <h3>Excel to AutoCAD Beam Schedule</h3>
-          <div class="tags"><span class="tag">Python</span><span class="tag">AutoCAD automation</span><span class="tag">Excel</span></div>
-        </div>
-        <div class="sheet-body">
-          <div class="row">
-            <div class="row-label">Problem</div>
-            <div class="row-content">Beam schedules are transcribed from design output into drawings by hand. Every revision reopens the same error surface.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Solution</div>
-            <div class="row-content">Reads a reinforcement schedule from Excel and draws dimensioned beam elevations directly in AutoCAD, with rebar callouts, hooks, beam marks, layers, and annotation applied automatically.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Impact</div>
-            <div class="row-content">Output cross-checked against manually produced schedules for the same beams.</div>
-          </div>
-        </div>
-        <button class="project-media" data-src="demos/demo-beam-schedule-generator.mp4" data-title="Excel to AutoCAD Beam Schedule">
-          <img src="demos/poster-beam-schedule-generator.jpg" width="1600" height="900" loading="lazy" alt="Generated beam elevation with reinforcement callouts.">
-          <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
-        </button>
-        <details class="more">
-          <summary>How it works</summary>
-          <div class="inner">
-            <p>The schedule is parsed into beam objects — span, section, top and bottom reinforcement, stirrup spacing — then each is drawn as an elevation with reinforcement lines, hook geometry, and callouts placed relative to the beam extents rather than at fixed offsets.</p>
-            <p>Drawing conventions are parameters, not hard-coded values: cover, bar gap, hook offsets, and dimension positioning are all exposed so the output matches an office standard rather than mine.</p>
-          </div>
-        </details>
-      </article>
+  <section class="ch" data-ch="rha" style="height:240vh">
+    <div class="ch-stick"><div class="ch-text">
+      <div class="num"><b>07</b><i></i>Python · Neural network · M.Tech thesis</div>
+      <h2 class="big">Rice Husk Ash <em>Strength Predictor</em></h2>
+      <p class="line">A neural network predicting 28-day compressive strength from six mix-proportion inputs, instead of casting samples and waiting 28 days.</p>
+      <div class="chips"><span>Rice husk ash</span><span>Cement</span><span>Water</span><span>Fine agg.</span><span>Coarse agg.</span><span>Superplasticiser</span></div>
+      <div class="acts"><button class="play" data-p="rha"><i><svg viewBox="0 0 9 11"><path d="M0 0l9 5.5L0 11z" fill="#05070b"/></svg></i>Watch demo</button><button class="more" data-d="rha">Read the details +</button></div>
+    </div></div>
+  </section>
 
-      <article class="sheet" data-k="rha">
-        <div class="sheet-head">
-          <h3>Rice Husk Ash Strength Predictor</h3>
-          <div class="tags"><span class="tag">Python</span><span class="tag">Neural network</span><span class="tag">M.Tech thesis</span></div>
-        </div>
-        <div class="sheet-body">
-          <div class="row">
-            <div class="row-label">Problem</div>
-            <div class="row-content">No code-based method predicts compressive strength for rice husk ash mixes, so proportioning them means casting samples and waiting 28 days.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Solution</div>
-            <div class="row-content">A neural network predicting 28-day compressive strength from six mix-proportion inputs: rice husk ash, cement, water, fine and coarse aggregate, and superplasticiser.</div>
-          </div>
-          <div class="row">
-            <div class="row-label">Impact</div>
-            <div class="row-content"><span class="row-metric">[metric] of [value]</span> against experimental results.</div>
-          </div>
-        </div>
-        <button class="project-media" data-src="demos/demo-rha-strength-predictor.mp4" data-title="Rice Husk Ash Strength Predictor">
-          <img src="demos/poster-rha-strength-predictor.jpg" width="1600" height="900" loading="lazy" alt="Strength predictor showing a 28-day prediction.">
-          <span class="play-btn"><svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>Play demo</span>
-        </button>
-        <details class="more">
-          <summary>How it works</summary>
-          <div class="inner">
-            <p>Rice husk ash is a pozzolanic replacement for cement, and its strength contribution is not linear in the replacement ratio — which is why IS 456 has nothing to say about it, and why a fitted model earns its place here.</p>
-            <p>The network takes the six mix quantities directly, with the trained model loaded at runtime so a mix can be re-proportioned and re-predicted in seconds. The interface keeps a prediction history so successive trials can be compared.</p>
-          </div>
-        </details>
-      </article>
+  <section class="ch" data-ch="next" style="height:170vh">
+    <div class="ch-stick"><div class="ch-text">
+      <div class="num"><b>08</b><i></i>In development</div>
+      <h2 class="big">What's <em>next</em></h2>
+      <p class="line">Listed separately because they are not finished. They move up when they are.</p>
+      <ul class="dev">
+        <li><b>MCP layer</b><span>A Model Context Protocol server over the toolkit, so a model can be queried and driven in plain language. The Grasshopper adapter is live in the assistant above; ETABS next, Revit after.</span></li>
+        <li><b>Model diff</b><span>An ETABS to Revit comparison checking section sizes, material grades, level elevations, and member presence, and reporting where the two models disagree.</span></li>
+        <li><b>Revit link</b><span>Placement for the foundation tool: footing families placed, sized, and tagged from the design output, closing the chain from analysis to BIM.</span></li>
+      </ul>
+    </div></div>
+  </section>
 
-      <div class="next" data-k="next">
-        <h3>In development</h3>
-        <p class="note">Listed separately because they are not finished. They move up when they are.</p>
-        <ul>
-          <li><b>MCP layer</b><span>A Model Context Protocol server over the toolkit, so a model can be queried and driven in plain language. The Grasshopper adapter is live in the assistant above; ETABS next, Revit after.</span></li>
-          <li><b>Model diff</b><span>An ETABS to Revit comparison checking section sizes, material grades, level elevations, and member presence, and reporting where the two models disagree.</span></li>
-          <li><b>Revit link</b><span>Placement for the foundation tool: footing families placed, sized, and tagged from the design output, closing the chain from analysis to BIM.</span></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="block" id="experience">
-  <div class="wrap">
-    <div class="lane">
-      <h2>Four years, three firms.</h2>
-
+  <section class="plain" id="experience" data-pl="exp">
+    <div class="col">
+      <div class="num"><b>—</b><i></i>Experience</div>
+      <h2 class="big">Four years, <em>three firms.</em></h2>
       <div class="exp">
         <div class="exp-meta">Dar Al Handasah · Bangalore<br>08/2025 – Present</div>
         <div>
@@ -517,7 +362,6 @@ footer { padding: 110px 0 44px; }
           <p>Python automation framework across structural modelling, Revit drafting, and QA/QC. Built ETABS-to-CAD data linkage for member size verification across thousands of elements, and led development of Revit add-ins and ETABS automation tools.</p>
         </div>
       </div>
-
       <div class="exp">
         <div class="exp-meta">Walter P Moore · Pune<br>11/2024 – 07/2025</div>
         <div>
@@ -525,7 +369,6 @@ footer { padding: 110px 0 44px; }
           <p>Design and analysis of high-rise building systems using FEA and advanced analysis methods. Maintained internal APIs synchronising ETABS, Revit, and design documentation. Coordinated with architects, MEP, and contractors on projects above $25M.</p>
         </div>
       </div>
-
       <div class="exp">
         <div class="exp-meta">Design Werkz · Pune<br>07/2022 – 11/2024</div>
         <div>
@@ -534,61 +377,39 @@ footer { padding: 110px 0 44px; }
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="block" id="skills">
-  <div class="wrap">
-    <div class="lane">
-      <h2>The stack behind the work.</h2>
+  <section class="plain" id="skills" data-pl="skills">
+    <div class="col">
+      <div class="num"><b>—</b><i></i>Skills</div>
+      <h2 class="big">The stack <em>behind the work.</em></h2>
       <div class="skills">
-        <div class="skill">
-          <h3>Design</h3>
-          <p>High-rise RCC and steel · Seismic and wind analysis · Shear walls and outriggers · Transfer structures · Foundation design · Value engineering</p>
-        </div>
-        <div class="skill">
-          <h3>Analysis</h3>
-          <p>ETABS · SAFE · SAP2000 · STAAD.Pro</p>
-        </div>
-        <div class="skill">
-          <h3>Programming</h3>
-          <p>Python · VB.NET · Tkinter and CustomTkinter for tool interfaces</p>
-        </div>
-        <div class="skill">
-          <h3>BIM &amp; CAD</h3>
-          <p>Revit and Revit API · Dynamo · Rhino and Grasshopper · AutoCAD automation</p>
-        </div>
-        <div class="skill">
-          <h3>Codes</h3>
-          <p>IS 456 · IS 875 · IS 1893 · ACI · Eurocode</p>
-        </div>
-        <div class="skill">
-          <h3>Education</h3>
-          <p>M.Tech, Computer-Aided Structural Engineering — Mahindra University · B.Tech (Hons), Civil Engineering — Manipal International University, Malaysia</p>
-        </div>
+        <div class="skill"><h3>Design</h3><p>High-rise RCC and steel · Seismic and wind analysis · Shear walls and outriggers · Transfer structures · Foundation design · Value engineering</p></div>
+        <div class="skill"><h3>Analysis</h3><p>ETABS · SAFE · SAP2000 · STAAD.Pro</p></div>
+        <div class="skill"><h3>Programming</h3><p>Python · VB.NET · Tkinter and CustomTkinter for tool interfaces</p></div>
+        <div class="skill"><h3>BIM &amp; CAD</h3><p>Revit and Revit API · Dynamo · Rhino and Grasshopper · AutoCAD automation</p></div>
+        <div class="skill"><h3>Codes</h3><p>IS 456 · IS 875 · IS 1893 · ACI · Eurocode</p></div>
+        <div class="skill"><h3>Education</h3><p>M.Tech, Computer-Aided Structural Engineering — Mahindra University · B.Tech (Hons), Civil Engineering — Manipal International University, Malaysia</p></div>
       </div>
     </div>
-  </div>
-</section>
-
+  </section>
 </main>
 
-<footer id="contact">
-  <div class="wrap">
-    <div class="lane">
-      <h2>Let's work together</h2>
-      <p>Open to structural design roles with a computational edge, and to AEC automation work — analysis to BIM workflows, design automation, and model validation.</p>
-      <div class="hero-cta" style="margin:28px 0 0">
-        <a class="btn btn-primary" href="mailto:asrithpothuri@gmail.com">Email me</a>
-        <a class="btn" href="https://www.linkedin.com/in/asrith-pothuri">LinkedIn</a>
-        <a class="btn" href="https://github.com/asrith-09">GitHub</a>
-      </div>
-      <div class="foot-links">
-        <a href="mailto:asrithpothuri@gmail.com">asrithpothuri@gmail.com</a>
-        <a href="https://www.linkedin.com/in/asrith-pothuri">LinkedIn</a>
-        <a href="https://github.com/asrith-09">GitHub</a>
-        <a href="files/Asrith-Pothuri-Resume.pdf">Resume (PDF)</a>
-      </div>
+<footer class="plain" id="contact" data-pl="contact" style="position:relative;z-index:2">
+  <div class="col">
+    <div class="num"><b>—</b><i></i>Contact</div>
+    <h2 class="big">Let's work <em>together</em></h2>
+    <p class="line">Open to structural design roles with a computational edge, and to AEC automation work — analysis to BIM workflows, design automation, and model validation.</p>
+    <div class="btns" style="margin-top:28px">
+      <a class="btn pri" href="mailto:asrithpothuri@gmail.com">Email me</a>
+      <a class="btn" href="https://www.linkedin.com/in/asrith-pothuri">LinkedIn</a>
+      <a class="btn" href="https://github.com/asrith-09">GitHub</a>
+    </div>
+    <div class="foot-links">
+      <a href="mailto:asrithpothuri@gmail.com">asrithpothuri@gmail.com</a>
+      <a href="https://www.linkedin.com/in/asrith-pothuri">LinkedIn</a>
+      <a href="https://github.com/asrith-09">GitHub</a>
+      <a href="files/Asrith-Pothuri-Resume.pdf">Resume (PDF)</a>
     </div>
     <div class="foot-bottom">
       <span>Asrith Pothuri — Structural engineer and automation builder, Bangalore, India.</span>
@@ -597,678 +418,831 @@ footer { padding: 110px 0 44px; }
   </div>
 </footer>
 
+<div class="shade" id="shade"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Project details">
+  <div class="dr-top"><span id="drN">Project</span><button class="x" id="drX">Close</button></div>
+  <div class="dr-body" id="drB"></div>
+</aside>
+
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Tool demo">
   <div class="box">
-    <div class="bar">
-      <span class="ttl" id="mtitle"></span>
-      <button class="x" id="mclose">Close</button>
-    </div>
-    <video id="mvideo" controls playsinline></video>
+    <div class="mbar"><span id="mT"></span><button class="x" id="mX">Close</button></div>
+    <video id="mV" controls playsinline></video>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
 <script>
-/* ---------- Demo modal ---------- */
+/* ---------- Project details, demo modal, scroll chrome ---------- */
 (function () {
-  var modal = document.getElementById('modal'),
-      vid = document.getElementById('mvideo'),
-      ttl = document.getElementById('mtitle'),
-      closeBtn = document.getElementById('mclose'),
-      last = null;
+  var PLAY = '<svg viewBox="0 0 9 11" aria-hidden="true"><path d="M0 0l9 5.5L0 11z" fill="currentColor"/></svg>';
+  var P = {
+    gh: {
+      n: '03', title: 'Grasshopper AI Assistant', tags: 'Python · Rhino &amp; Grasshopper · LLM agents · MCP',
+      video: 'demos/demo-grasshopper-ai-assistant.mp4', poster: 'demos/poster-grasshopper-ai-assistant.jpg',
+      alt: "Grasshopper definition for a twisted tower beside the assistant's build summary.",
+      problem: 'Building or reading a Grasshopper definition takes Grasshopper fluency, so most engineers never open parametric tools, and the definitions that do exist are hard for anyone else to change.',
+      solution: 'A desktop assistant connected to a live Rhino session. It turns a plain-language request into a wired definition built from native components, edits an existing definition in place, and explains selected components step by step.',
+      impact: 'A twisted tower built from one sentence, then changed to <span class="m">12 floors and a 15° twist in 38 seconds</span> by updating two sliders instead of rebuilding.',
+      how: ['A small Rhino plugin starts with Rhino and serves a local Model Context Protocol endpoint, so the assistant drives Rhino and Grasshopper directly without depending on a third-party server. The model plans the definition first, then the plan is compiled into native components and wires on the canvas.',
+            'Every build is checked twice before it is handed back: the solution is read for errors and warnings, and a viewport capture is compared against the request. Edits change the existing components rather than adding a second copy, and each build can be undone in one step.']
+    },
+    found: {
+      n: '04', title: 'ETABS Foundation Auto Tool', tags: 'Python · ETABS API · IS 456',
+      video: 'demos/demo-foundation-auto-tool.mp4', poster: 'demos/poster-foundation-auto-tool.jpg',
+      alt: 'Foundation Auto Tool showing a generated footing schedule.',
+      problem: 'Foundation sizing is a spreadsheet loop: pull reactions, size against bearing capacity, check shear, group repeats, then model every footing by hand.',
+      solution: 'Reads column reactions and the selected load combinations, sizes isolated footings against safe bearing capacity, groups them within a set tolerance, and builds the footing geometry back into ETABS.',
+      impact: 'Resolved <span class="m">40 columns into 15 footing groups</span> on the demonstration model, cross-checked against manual calculations.',
+      how: ['Reactions are pulled per column for each selected combination, and the governing case drives the sizing. Footings are sized against the entered safe bearing capacity, then checked for punching shear and one-way shear before a size is accepted.',
+            'Grouping runs on a tolerance the engineer sets. Footings within that band collapse into a single type, which is what keeps a schedule buildable rather than forty bespoke sizes. Geometry is then written back through the ETABS API rather than modelled by hand.']
+    },
+    valid: {
+      n: '05', title: 'ETABS Property Validator', tags: 'Python · ETABS API · Excel',
+      video: 'demos/demo-etabs-property-validator.mp4', poster: 'demos/poster-etabs-property-validator.jpg',
+      alt: 'ETABS Property Validator showing validation results.',
+      problem: 'Section names drift from geometry as models are edited. A frame called C 900×600 that is actually 600×900 analyses fine and fails review late.',
+      solution: 'Audits every frame, wall, and slab section against its assigned name. Exports a report isolating mismatches with named and actual dimensions side by side.',
+      impact: 'Processes <span class="m">1,000+ sections in under 30 seconds</span>. Caught two frame mismatches that had passed visual review.',
+      how: ['Section names carry the intent — dimensions, grade, sometimes a type prefix. The tool parses that intent out of the name, reads the actual geometric properties through the API, and compares the two.',
+            'Names that cannot be parsed are reported separately rather than silently passed, because a section the checker cannot read is exactly the one worth a human look. Output is an Excel workbook split by element type with a dedicated mismatches sheet.']
+    },
+    beam: {
+      n: '06', title: 'Excel to AutoCAD Beam Schedule', tags: 'Python · AutoCAD automation · Excel',
+      video: 'demos/demo-beam-schedule-generator.mp4', poster: 'demos/poster-beam-schedule-generator.jpg',
+      alt: 'Generated beam elevation with reinforcement callouts.',
+      problem: 'Beam schedules are transcribed from design output into drawings by hand. Every revision reopens the same error surface.',
+      solution: 'Reads a reinforcement schedule from Excel and draws dimensioned beam elevations directly in AutoCAD, with rebar callouts, hooks, beam marks, layers, and annotation applied automatically.',
+      impact: 'Output cross-checked against manually produced schedules for the same beams.',
+      how: ['The schedule is parsed into beam objects — span, section, top and bottom reinforcement, stirrup spacing — then each is drawn as an elevation with reinforcement lines, hook geometry, and callouts placed relative to the beam extents rather than at fixed offsets.',
+            'Drawing conventions are parameters, not hard-coded values: cover, bar gap, hook offsets, and dimension positioning are all exposed so the output matches an office standard rather than mine.']
+    },
+    rha: {
+      n: '07', title: 'Rice Husk Ash Strength Predictor', tags: 'Python · Neural network · M.Tech thesis',
+      video: 'demos/demo-rha-strength-predictor.mp4', poster: 'demos/poster-rha-strength-predictor.jpg',
+      alt: 'Strength predictor showing a 28-day prediction.',
+      problem: 'No code-based method predicts compressive strength for rice husk ash mixes, so proportioning them means casting samples and waiting 28 days.',
+      solution: 'A neural network predicting 28-day compressive strength from six mix-proportion inputs: rice husk ash, cement, water, fine and coarse aggregate, and superplasticiser.',
+      impact: '<span class="m">[metric] of [value]</span> against experimental results.',
+      how: ['Rice husk ash is a pozzolanic replacement for cement, and its strength contribution is not linear in the replacement ratio — which is why IS 456 has nothing to say about it, and why a fitted model earns its place here.',
+            'The network takes the six mix quantities directly, with the trained model loaded at runtime so a mix can be re-proportioned and re-predicted in seconds. The interface keeps a prediction history so successive trials can be compared.']
+    }
+  };
 
-  function open(src, title, trigger) {
-    last = trigger;
-    vid.src = src; ttl.textContent = title;
-    modal.classList.add('on');
-    document.body.style.overflow = 'hidden';
-    closeBtn.focus();
-    var p = vid.play(); if (p && p.catch) { p.catch(function () {}); }
+  /* modal */
+  var modal = document.getElementById('modal'), mV = document.getElementById('mV'), mT = document.getElementById('mT'), mX = document.getElementById('mX'), lastFocus = null;
+  function openVideo(k, from) {
+    var p = P[k]; if (!p) return;
+    lastFocus = from || null;
+    mV.setAttribute('poster', p.poster); mV.src = p.video; mT.textContent = p.title;
+    modal.classList.add('on'); document.body.style.overflow = 'hidden';
+    if (window.__lenis) window.__lenis.stop();
+    mX.focus();
+    var pr = mV.play(); if (pr && pr.catch) pr.catch(function () {});
   }
-  function close() {
-    modal.classList.remove('on');
-    vid.pause(); vid.removeAttribute('src'); vid.load();
-    document.body.style.overflow = '';
-    if (last) last.focus();
+  function closeVideo() {
+    modal.classList.remove('on'); mV.pause(); mV.removeAttribute('src'); mV.load();
+    if (!drawer.classList.contains('on')) { document.body.style.overflow = ''; if (window.__lenis) window.__lenis.start(); }
+    if (lastFocus) lastFocus.focus();
   }
-  Array.prototype.forEach.call(document.querySelectorAll('.project-media'), function (b) {
-    b.addEventListener('click', function () {
-      var im = b.querySelector('img'); if (im) vid.setAttribute('poster', im.getAttribute('src'));
-      open(b.getAttribute('data-src'), b.getAttribute('data-title'), b);
-    });
+  mX.addEventListener('click', closeVideo);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeVideo(); });
+
+  /* drawer */
+  var drawer = document.getElementById('drawer'), shade = document.getElementById('shade'), drB = document.getElementById('drB'), drN = document.getElementById('drN'), drX = document.getElementById('drX'), drFrom = null;
+  function row(h, body) { return '<div class="dr-row"><h4>' + h + '</h4>' + body + '</div>'; }
+  function openDrawer(k, from) {
+    var p = P[k]; if (!p) return;
+    drFrom = from || null;
+    drN.textContent = p.n + ' / 08 — Project';
+    drB.innerHTML = '<h3>' + p.title + '</h3><div class="tags" style="display:flex"><span class="tag">' + p.tags.split(' · ').join('</span><span class="tag">') + '</span></div>' +
+      '<button class="poster" data-p="' + k + '"><img src="' + p.poster + '" alt="' + p.alt + '" loading="lazy"><span>' + PLAY + 'Play demo</span></button>' +
+      row('Problem', '<p>' + p.problem + '</p>') + row('Solution', '<p>' + p.solution + '</p>') + row('Impact', '<p>' + p.impact + '</p>') +
+      row('How it works', '<p>' + p.how.join('</p><p>') + '</p>');
+    drawer.classList.add('on'); shade.classList.add('on'); drawer.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden'; if (window.__lenis) window.__lenis.stop();
+    drawer.scrollTop = 0; drX.focus();
+  }
+  function closeDrawer() {
+    drawer.classList.remove('on'); shade.classList.remove('on'); drawer.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = ''; if (window.__lenis) window.__lenis.start();
+    if (drFrom) drFrom.focus();
+  }
+  drX.addEventListener('click', closeDrawer); shade.addEventListener('click', closeDrawer);
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('[data-p],[data-d]') : null; if (!t) return;
+    if (t.hasAttribute('data-p')) openVideo(t.getAttribute('data-p'), t);
+    else openDrawer(t.getAttribute('data-d'), t);
   });
-  closeBtn.addEventListener('click', close);
-  modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && modal.classList.contains('on')) close();
+    if (e.key !== 'Escape') return;
+    if (modal.classList.contains('on')) closeVideo(); else if (drawer.classList.contains('on')) closeDrawer();
   });
-})();
 
-/* ---------- Scroll-driven 3D tower ---------- */
-(function () {
+  /* smooth scroll */
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var coarse = window.matchMedia('(pointer: coarse)').matches;
-  var root = document.documentElement;
-  var nav = document.getElementById('nav');
-
-  function onScrollNav() { nav.classList.toggle('solid', (window.scrollY || 0) > 40); }
-  window.addEventListener('scroll', onScrollNav, { passive: true });
-  onScrollNav();
-
-  if (!(window.THREE && window.gsap && window.ScrollTrigger)) { root.classList.add('no-gl'); return; }
-  gsap.registerPlugin(ScrollTrigger);
-
-  /* Scene state. Everything the scroll timeline animates lives here. */
-  function mk(o) {
-    var d = {
-      build: 1.06, twist: 0, az: 0.8, el: 0.16, dist: 172, ty: 40, tx: 0, sx: 0.2,
-      foot: 0, sec: 0, beam: 0, brace: 0, net: 0, draw: 0, gh: 0, tower: 1, wid: 36, sy: 0
-    };
-    for (var k in o) d[k] = o[k];
-    return d;
-  }
-  var K = {
-    hero:  mk({ build: 0.58, az: 0.62, el: 0.2, dist: 150, ty: 30, sy: 0.2 }),
-    work:  mk({ az: 0.95 }),
-    gh0:   mk({ build: 0, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, wid: 112 }),
-    gh1:   mk({ build: 0, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, wid: 112, gh: 1.1 }),
-    gh2:   mk({ twist: 1.5, az: 0, el: 0.03, dist: 270, tx: -38, sx: 0.26, wid: 112, gh: 1.1 }),
-    found: mk({ az: 0.7, el: 0.44, dist: 112, ty: 8, foot: 1 }),
-    valid: mk({ az: 2.1, el: 0.14, dist: 170, sec: 1 }),
-    beam:  mk({ az: 0, el: 0, dist: 185, draw: 1.08, tower: 0.03, sx: 0.27, wid: 76 }),
-    rha:   mk({ az: 0.1, el: 0.05, dist: 200, net: 1, tower: 0.05, sx: 0.285, wid: 72 }),
-    next:  mk({ build: 0.84, az: 4.3, el: 0.28, dist: 165, ty: 36, brace: 1 }),
-    exp:   mk({ twist: 0.35, az: 5.2, el: 0.95, dist: 205, ty: 22 }),
-    skills:mk({ az: 6.0, el: 0.16 }),
-    contact: mk({ az: 6.8, el: 0.1, dist: 230, ty: 42, sx: 0.18 })
-  };
-  var S = {};
-  for (var key in K.hero) S[key] = K.hero[key];
-  S.intro = reduce ? 1 : 0.0;
-
-  /* ----- renderer ----- */
-  var canvas = document.getElementById('gl');
-  var renderer;
-  try {
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-  } catch (e) { root.classList.add('no-gl'); return; }
-  renderer.setClearColor(0x000000, 0);
-  var DPR = Math.min(window.devicePixelRatio || 1, 1.75);
-  renderer.setPixelRatio(DPR);
-
-  var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(32, 1, 1, 1200);
-
-  /* ----- shared uniforms ----- */
-  var U = {
-    uBuild: { value: 0 }, uTwist: { value: 0 }, uTime: { value: 0 }, uTower: { value: 1 },
-    uHL: { value: new THREE.Vector4(0, 0, 0, 0) }, uPx: { value: DPR }
-  };
-
-  var FLOORS = 24, FH = 3.2, H = FLOORS * FH;
-  var G = [-12, -6, 0, 6, 12];
-
-  var GLSL_COMMON = [
-    'attribute float aType; attribute float aH;',
-    'uniform float uBuild, uTwist, uTime, uTower; uniform vec4 uHL;',
-    'varying vec4 vCol;',
-    'vec3 twistP(vec3 p){ float a = uTwist * aH; float c = cos(a), s = sin(a); return vec3(c*p.x + s*p.z, p.y, -s*p.x + c*p.z); }',
-    'vec4 shade(){',
-    '  float t = aType;',
-    '  float vis = (t < 0.5) ? 1.0 : 1.0 - smoothstep(uBuild - 0.015, uBuild + 0.015, aH);',
-    '  float hl = t < 0.5 ? uHL.x : (t < 1.5 ? uHL.y : (t < 2.5 ? uHL.z : uHL.w));',
-    '  float focus = clamp(uHL.x + uHL.y + uHL.z + uHL.w, 0.0, 1.0);',
-    '  vec3 base = t < 0.5 ? vec3(0.70,0.86,1.0) : (t < 1.5 ? vec3(0.62,0.80,0.97) : (t < 2.5 ? vec3(0.50,0.70,0.92) : vec3(0.93,0.96,1.0)));',
-    '  float a = t < 0.5 ? 0.85 : (t < 1.5 ? 0.9 : (t < 2.5 ? 0.5 : 0.8));',
-    '  base = mix(base, vec3(1.0), aH * 0.25);',
-    '  float dd = (aH - uBuild) * 22.0;',
-    '  float front = exp(-dd * dd) * (1.0 - smoothstep(0.985, 1.03, uBuild)) * step(0.001, uBuild);',
-    '  vec3 mark = vec3(1.0, 0.82, 0.29);',
-    '  vec3 col = mix(base, mark, clamp(hl * 0.9 + front * 0.8, 0.0, 1.0));',
-    '  float alpha = a * mix(1.0, 0.16, focus * (1.0 - hl));',
-    '  alpha = (alpha + hl * 0.45 + front * 0.5) * vis * uTower;',
-    '  alpha *= 0.93 + 0.07 * sin(uTime * 1.5 + aH * 50.0);',
-    '  return vec4(col, alpha);',
-    '}'
-  ].join('\n');
-
-  var lineVS = GLSL_COMMON + '\nvoid main(){ vec3 p = twistP(position); vec4 mv = modelViewMatrix * vec4(p, 1.0); vCol = shade(); float d = -mv.z; vCol.a *= clamp(1.35 - (d - 90.0) / 260.0, 0.3, 1.0); gl_Position = projectionMatrix * mv; }';
-  var ptVS = GLSL_COMMON + '\nuniform float uPx; void main(){ vec3 p = twistP(position); vec4 mv = modelViewMatrix * vec4(p, 1.0); vCol = shade(); float d = -mv.z; vCol.a *= clamp(1.35 - (d - 90.0) / 260.0, 0.3, 1.0); gl_PointSize = clamp(uPx * 2.4 * (380.0 / d), 1.5, 9.0); gl_Position = projectionMatrix * mv; }';
-  var lineFS = 'varying vec4 vCol; void main(){ gl_FragColor = vCol; }';
-  var ptFS = 'varying vec4 vCol; void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; gl_FragColor = vec4(vCol.rgb, vCol.a * smoothstep(0.5, 0.05, d)); }';
-
-  function addMat(uniforms, vs, fs) {
-    return new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  }
-  function baseMat(vs, fs) { return addMat(U, vs, fs); }
-
-  /* ----- the tower: columns, core, beams, outriggers, footings ----- */
-  var P = [], T = [], HH = [];
-  function nh(y) { return Math.max(0, Math.min(1, y / H)); }
-  function seg(ax, ay, az, bx, by, bz, t) { P.push(ax, ay, az, bx, by, bz); T.push(t, t); HH.push(nh(ay), nh(by)); }
-  function segSub(ax, ay, az, bx, by, bz, n, t) {
-    for (var q = 0; q < n; q++) {
-      var f0 = q / n, f1 = (q + 1) / n;
-      seg(ax + (bx - ax) * f0, ay + (by - ay) * f0, az + (bz - az) * f0, ax + (bx - ax) * f1, ay + (by - ay) * f1, az + (bz - az) * f1, t);
-    }
-  }
-  var f, i, j, gx, gz;
-
-  for (i = 0; i < G.length; i++) for (j = 0; j < G.length; j++) {
-    gx = G[i]; gz = G[j];
-    if (gx === 0 && gz === 0) continue;
-    for (f = 0; f < FLOORS; f++) segSub(gx, f * FH, gz, gx, (f + 1) * FH, gz, 2, 1);
-  }
-  var C = 3;
-  var cc = [[-C, -C], [C, -C], [C, C], [-C, C]];
-  for (i = 0; i < 4; i++) for (f = 0; f < FLOORS; f++) segSub(cc[i][0], f * FH, cc[i][1], cc[i][0], (f + 1) * FH, cc[i][1], 2, 1);
-  for (f = 0; f <= FLOORS; f++) {
-    var y = f * FH;
-    for (j = 0; j < G.length; j++) for (i = 0; i < G.length - 1; i++) {
-      seg(G[i], y, G[j], G[i + 1], y, G[j], 2);
-      seg(G[j], y, G[i], G[j], y, G[i + 1], 2);
-    }
-    for (i = 0; i < 4; i++) { var n2 = cc[(i + 1) % 4]; seg(cc[i][0], y, cc[i][1], n2[0], y, n2[1], 2); }
-  }
-  var bands = [[7, 9], [15, 17], [22, 24]];
-  bands.forEach(function (b) {
-    var y0 = b[0] * FH, y1 = b[1] * FH;
-    for (var q = 0; q < G.length - 1; q++) {
-      var a = G[q], c2 = G[q + 1];
-      segSub(a, y0, -12, c2, y1, -12, 3, 3); segSub(c2, y0, -12, a, y1, -12, 3, 3);
-      segSub(a, y0, 12, c2, y1, 12, 3, 3);   segSub(c2, y0, 12, a, y1, 12, 3, 3);
-      segSub(-12, y0, a, -12, y1, c2, 3, 3); segSub(-12, y0, c2, -12, y1, a, 3, 3);
-      segSub(12, y0, a, 12, y1, c2, 3, 3);   segSub(12, y0, c2, 12, y1, a, 3, 3);
-    }
-    segSub(C, y0, 0, 12, y1, 0, 4, 3);   segSub(C, y1, 0, 12, y0, 0, 4, 3);
-    segSub(-C, y0, 0, -12, y1, 0, 4, 3); segSub(-C, y1, 0, -12, y0, 0, 4, 3);
-    segSub(0, y0, C, 0, y1, 12, 4, 3);   segSub(0, y1, C, 0, y0, 12, 4, 3);
-    segSub(0, y0, -C, 0, y1, -12, 4, 3); segSub(0, y1, -C, 0, y0, -12, 4, 3);
-  });
-  segSub(0, H, 0, 0, H + 14, 0, 4, 1);
-  function box(cx, cy, cz, sx, sy, sz, t) {
-    var x0 = cx - sx / 2, x1 = cx + sx / 2, y0 = cy - sy / 2, y1 = cy + sy / 2, z0 = cz - sz / 2, z1 = cz + sz / 2;
-    seg(x0, y0, z0, x1, y0, z0, t); seg(x1, y0, z0, x1, y0, z1, t); seg(x1, y0, z1, x0, y0, z1, t); seg(x0, y0, z1, x0, y0, z0, t);
-    seg(x0, y1, z0, x1, y1, z0, t); seg(x1, y1, z0, x1, y1, z1, t); seg(x1, y1, z1, x0, y1, z1, t); seg(x0, y1, z1, x0, y1, z0, t);
-    seg(x0, y0, z0, x0, y1, z0, t); seg(x1, y0, z0, x1, y1, z0, t); seg(x1, y0, z1, x1, y1, z1, t); seg(x0, y0, z1, x0, y1, z1, t);
-  }
-  for (i = 0; i < G.length; i++) for (j = 0; j < G.length; j++) {
-    gx = G[i]; gz = G[j];
-    if (gx === 0 && gz === 0) continue;
-    var edge = (Math.abs(gx) === 12 ? 1 : 0) + (Math.abs(gz) === 12 ? 1 : 0);
-    var fsz = edge === 2 ? 4.6 : (edge === 1 ? 3.8 : 3.0);
-    box(gx, -0.7, gz, fsz, 1.4, fsz, 0);
-  }
-  box(0, -1.0, 0, 11, 2.0, 11, 0);
-  for (j = 0; j < G.length; j++) for (i = 0; i < G.length - 1; i++) {
-    seg(G[i], -0.7, G[j], G[i + 1], -0.7, G[j], 0);
-    seg(G[j], -0.7, G[i], G[j], -0.7, G[i + 1], 0);
-  }
-
-  var lg = new THREE.BufferGeometry();
-  lg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
-  lg.setAttribute('aType', new THREE.Float32BufferAttribute(T, 1));
-  lg.setAttribute('aH', new THREE.Float32BufferAttribute(HH, 1));
-  var tower = new THREE.LineSegments(lg, baseMat(lineVS, lineFS));
-  tower.frustumCulled = false;
-
-  var NP = [], NT = [], NH = [];
-  for (f = 0; f <= FLOORS; f++) for (i = 0; i < G.length; i++) for (j = 0; j < G.length; j++) {
-    if (G[i] === 0 && G[j] === 0) continue;
-    NP.push(G[i], f * FH, G[j]); NT.push(f === 0 ? 0 : 2); NH.push(nh(f * FH));
-  }
-  var ng = new THREE.BufferGeometry();
-  ng.setAttribute('position', new THREE.Float32BufferAttribute(NP, 3));
-  ng.setAttribute('aType', new THREE.Float32BufferAttribute(NT, 1));
-  ng.setAttribute('aH', new THREE.Float32BufferAttribute(NH, 1));
-  var joints = new THREE.Points(ng, baseMat(ptVS, ptFS));
-  joints.frustumCulled = false;
-
-  var rig = new THREE.Group();
-  rig.add(tower); rig.add(joints);
-  scene.add(rig);
-
-  var plate = new THREE.LineLoop(
-    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-13.5, 0, -13.5), new THREE.Vector3(13.5, 0, -13.5), new THREE.Vector3(13.5, 0, 13.5), new THREE.Vector3(-13.5, 0, 13.5)]),
-    new THREE.LineBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false })
-  );
-  rig.add(plate);
-
-  var GP = [], gstep = 6, gext = 150, gk;
-  for (gk = -gext; gk <= gext; gk += gstep) { GP.push(-gext, 0, gk, gext, 0, gk, gk, 0, -gext, gk, 0, gext); }
-  var gg = new THREE.BufferGeometry();
-  gg.setAttribute('position', new THREE.Float32BufferAttribute(GP, 3));
-  var ground = new THREE.LineSegments(gg, new THREE.ShaderMaterial({
-    uniforms: { uTower: U.uTower },
-    vertexShader: 'varying vec2 vP; void main(){ vP = position.xz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'varying vec2 vP; uniform float uTower; void main(){ float a = 0.42 * (1.0 - smoothstep(20.0, 135.0, length(vP))); gl_FragColor = vec4(0.56, 0.76, 0.93, a * (0.35 + 0.65 * uTower)); }',
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-  }));
-  rig.add(ground);
-
-  /* ===== Beam schedule: an Excel table drafts itself into a dimensioned beam elevation ===== */
-  var BU = { uDraw: { value: 0 } };
-  var BP = [], BX = [], BKd = [];
-  var BX0 = -36, BXW = 68;
-  function bnx(x) { return (x - BX0) / BXW; }
-  function bseg(ax, ay, bx, by, k) {
-    var len = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
-    var n = Math.max(1, Math.ceil(len / 1.4));
-    for (var q = 0; q < n; q++) {
-      var t0 = q / n, t1 = (q + 1) / n;
-      var x0 = ax + (bx - ax) * t0, y0 = ay + (by - ay) * t0, x1 = ax + (bx - ax) * t1, y1 = ay + (by - ay) * t1;
-      BP.push(x0, y0, 0, x1, y1, 0); BX.push(bnx(x0), bnx(x1)); BKd.push(k, k);
-    }
-  }
-  var r, x;
-  // schedule table (Excel): 5 rows by 4 columns
-  for (r = 0; r <= 5; r++) bseg(-36, 34 + r * 2.4, -20, 34 + r * 2.4, 4);
-  for (x = 0; x <= 4; x++) bseg(-36 + x * 4, 34, -36 + x * 4, 46, 4);
-  // arrow from the table into the drawing
-  bseg(-18.5, 40, -12.8, 40, 3); bseg(-12.8, 40, -14.2, 41.2, 3); bseg(-12.8, 40, -14.2, 38.8, 3);
-  // beam elevation: concrete outline and column stubs
-  bseg(-8, 37.5, 28, 37.5, 0); bseg(-8, 42.5, 28, 42.5, 0);
-  bseg(-12, 31, -12, 49, 0); bseg(-8, 31, -8, 37.5, 0); bseg(-8, 42.5, -8, 49, 0);
-  bseg(28, 31, 28, 37.5, 0); bseg(28, 42.5, 28, 49, 0); bseg(32, 31, 32, 49, 0);
-  // main bars with hooks
-  bseg(-11, 41.6, 31, 41.6, 1); bseg(-11, 41.1, 31, 41.1, 1);
-  bseg(-11, 41.6, -11, 38.8, 1); bseg(31, 41.6, 31, 38.8, 1);
-  bseg(-11, 38.4, 31, 38.4, 1); bseg(-11, 38.9, 31, 38.9, 1);
-  bseg(-11, 38.4, -11, 41.2, 1); bseg(31, 38.4, 31, 41.2, 1);
-  // extra top bars over the supports
-  bseg(-11, 40.55, 4, 40.55, 1); bseg(14, 40.55, 31, 40.55, 1);
-  // stirrups, closer near the supports
-  var sx;
-  for (sx = -7; sx <= 1; sx += 1.2) bseg(sx, 38.0, sx, 42.0, 2);
-  for (sx = 3.4; sx < 18.6; sx += 2.4) bseg(sx, 38.0, sx, 42.0, 2);
-  for (sx = 20; sx <= 27; sx += 1.2) bseg(sx, 38.0, sx, 42.0, 2);
-  // dimension string and leader
-  bseg(-8, 34.5, 28, 34.5, 3);
-  [-8, 1, 19, 28].forEach(function (tx2) { bseg(tx2, 33.7, tx2, 35.3, 3); });
-  bseg(-8, 36.9, -8, 34.9, 3); bseg(28, 36.9, 28, 34.9, 3);
-  bseg(10, 41.6, 14, 47, 3); bseg(14, 47, 23, 47, 3);
-
-  var bg = new THREE.BufferGeometry();
-  bg.setAttribute('position', new THREE.Float32BufferAttribute(BP, 3));
-  bg.setAttribute('aX', new THREE.Float32BufferAttribute(BX, 1));
-  bg.setAttribute('aK', new THREE.Float32BufferAttribute(BKd, 1));
-  var beamDoc = new THREE.LineSegments(bg, addMat(BU,
-    'attribute float aX, aK; uniform float uDraw; varying vec4 vC; void main(){ float vis = 1.0 - smoothstep(uDraw - 0.01, uDraw + 0.01, aX); float dd = (aX - uDraw) * 16.0; float front = exp(-dd * dd) * step(0.001, uDraw) * (1.0 - smoothstep(1.0, 1.08, uDraw)); vec3 col = aK < 0.5 ? vec3(0.93,0.97,1.0) : (aK < 1.5 ? vec3(1.0,0.82,0.29) : (aK < 2.5 ? vec3(0.62,0.82,1.0) : (aK < 3.5 ? vec3(0.56,0.74,0.92) : vec3(0.72,0.86,1.0)))); float a = aK < 0.5 ? 0.85 : (aK < 1.5 ? 1.0 : (aK < 2.5 ? 0.7 : 0.6)); col = mix(col, vec3(1.0), front * 0.7); vC = vec4(col, (a + front * 0.6) * vis * step(0.001, uDraw)); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    'varying vec4 vC; void main(){ gl_FragColor = vC; }'));
-  beamDoc.frustumCulled = false;
-  beamDoc.position.set(2, 0, 0);
-  beamDoc.visible = false;
-  scene.add(beamDoc);
-
-  /* ===== Grasshopper: the definition wires itself up, then the tower is baked from it ===== */
-  var GU = { uGH: { value: 0 }, uSlide0: { value: 0 }, uSlide1: { value: 0 } };
-  var GPs = [], GOs = [], GKs = [], GSs = [];
-  function gseg(ax, ay, bx, by, o0, o1, k, s) { GPs.push(ax, ay, 0, bx, by, 0); GOs.push(o0, o1); GKs.push(k, k); GSs.push(s || 0, s || 0); }
-  function gsq(cx, cy, h, o) { gseg(cx - h, cy - h, cx + h, cy - h, o, o, 1); gseg(cx + h, cy - h, cx + h, cy + h, o, o, 1); gseg(cx + h, cy + h, cx - h, cy + h, o, o, 1); gseg(cx - h, cy + h, cx - h, cy - h, o, o, 1); }
-  var gcx = [-82, -64, -46, -28], gcy = [58, 44, 30], NWd = 12, NHt = 6;
-  var gnodes = [
-    { n: 'Floors', c: 0, r: 0, o: 0.00, ins: 0, sl: 0 },
-    { n: 'Series', c: 1, r: 0, o: 0.20, ins: 1 },
-    { n: 'Rectangle', c: 1, r: 1, o: 0.10, ins: 0 },
-    { n: 'Move', c: 2, r: 0, o: 0.35, ins: 2 },
-    { n: 'Twist', c: 0, r: 2, o: 0.05, ins: 0, sl: 1 },
-    { n: 'Rotate', c: 2, r: 2, o: 0.50, ins: 2 },
-    { n: 'Loft', c: 3, r: 1, o: 0.65, ins: 1 }
-  ];
-  gnodes.forEach(function (nd) { nd.x = gcx[nd.c]; nd.y = gcy[nd.r]; });
-  function portIn(nd, idx) { var oy = nd.ins <= 1 ? 0 : (idx === 0 ? 1.5 : -1.5); return [nd.x - NWd / 2, nd.y + oy]; }
-  gnodes.forEach(function (nd) {
-    var x0 = nd.x - NWd / 2, x1 = nd.x + NWd / 2, y0 = nd.y - NHt / 2, y1 = nd.y + NHt / 2, o = nd.o;
-    gseg(x0, y0, x1, y0, o, o, 0); gseg(x1, y0, x1, y1, o, o, 0); gseg(x1, y1, x0, y1, o, o, 0); gseg(x0, y1, x0, y0, o, o, 0);
-    gsq(x1, nd.y, 0.5, o);
-    for (var p2 = 0; p2 < nd.ins; p2++) { var pi = portIn(nd, p2); gsq(pi[0], pi[1], 0.5, o); }
-    if (nd.sl !== undefined) {
-      gseg(nd.x - 4.5, nd.y - 1.6, nd.x + 4.5, nd.y - 1.6, o, o, 3);
-      gseg(nd.x - 4.5, nd.y - 2.4, nd.x - 4.5, nd.y - 0.8, o, o, 5, nd.sl);
-    }
-  });
-  function gwire(a, b, inIdx, toTower) {
-    var A = gnodes[a], p0 = [A.x + NWd / 2, A.y], p3, o1;
-    if (toTower) { p3 = [-12, 40]; o1 = 0.95; } else { var B = gnodes[b]; p3 = portIn(B, inIdx); o1 = B.o; }
-    var o0 = A.o + 0.03, d = Math.abs(p3[0] - p0[0]) * 0.5, N = 16, prev = null;
-    for (var q = 0; q <= N; q++) {
-      var t = q / N, u = 1 - t;
-      var px = u * u * u * p0[0] + 3 * u * u * t * (p0[0] + d) + 3 * u * t * t * (p3[0] - d) + t * t * t * p3[0];
-      var py = u * u * u * p0[1] + 3 * u * u * t * p0[1] + 3 * u * t * t * p3[1] + t * t * t * p3[1];
-      var oo = o0 + (o1 - o0) * t;
-      if (prev) gseg(prev[0], prev[1], px, py, prev[2], oo, 2);
-      prev = [px, py, oo];
-    }
-  }
-  gwire(0, 1, 0); gwire(1, 3, 0); gwire(2, 3, 1); gwire(3, 5, 0); gwire(4, 5, 1); gwire(5, 6, 0); gwire(6, 0, 0, true);
-
-  var ggeo = new THREE.BufferGeometry();
-  ggeo.setAttribute('position', new THREE.Float32BufferAttribute(GPs, 3));
-  ggeo.setAttribute('aO', new THREE.Float32BufferAttribute(GOs, 1));
-  ggeo.setAttribute('aK', new THREE.Float32BufferAttribute(GKs, 1));
-  ggeo.setAttribute('aS', new THREE.Float32BufferAttribute(GSs, 1));
-  var ghGraph = new THREE.LineSegments(ggeo, addMat(GU,
-    'attribute float aO, aK, aS; uniform float uGH, uSlide0, uSlide1; varying vec4 vC; void main(){ vec3 p = position; if (aK > 4.5) { p.x += (aS < 0.5 ? uSlide0 : uSlide1) * 9.0; } float vis = 1.0 - smoothstep(uGH - 0.012, uGH + 0.012, aO); float dd = (aO - uGH) * 18.0; float front = exp(-dd * dd) * step(0.001, uGH) * (1.0 - smoothstep(1.05, 1.1, uGH)); vec3 col = aK < 0.5 ? vec3(0.93,0.97,1.0) : (aK < 1.5 ? vec3(0.75,0.88,1.0) : (aK < 2.5 ? vec3(0.56,0.76,0.93) : (aK < 3.5 ? vec3(0.6,0.8,0.95) : vec3(1.0,0.82,0.29)))); float a = aK < 0.5 ? 0.85 : (aK < 1.5 ? 0.9 : (aK < 2.5 ? 0.6 : (aK < 3.5 ? 0.6 : 1.0))); col = mix(col, vec3(1.0,0.82,0.29), front * 0.8); vC = vec4(col, (a + front * 0.5) * vis * step(0.001, uGH)); gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }',
-    'varying vec4 vC; void main(){ gl_FragColor = vC; }'));
-  ghGraph.frustumCulled = false;
-  ghGraph.visible = false;
-  scene.add(ghGraph);
-
-  /* ===== Strength predictor: six mix inputs, a network, and a concrete cube specimen ===== */
-  var net = new THREE.Group();
-  var layers = [6, 8, 8, 1], NPos = [], SPX = 14;
-  layers.forEach(function (n, li) {
-    var arr = [];
-    for (var ni = 0; ni < n; ni++) {
-      var yy = n === 1 ? 0 : (ni - (n - 1) / 2) * (36 / (n - 1));
-      arr.push([(li - 1.5) * SPX, yy, li === 3 ? 0 : Math.sin(ni * 1.7 + li * 2.1) * 5]);
-    }
-    NPos.push(arr);
-  });
-  var LP = [], LT = [], LL = [], LR = [];
-  function nseg(ax, ay, az, bx, by, bz, l) { var rr = Math.random(); LP.push(ax, ay, az, bx, by, bz); LT.push(0, 1); LL.push(l, l); LR.push(rr, rr); }
-  var li2, a2, b2;
-  for (li2 = 0; li2 < layers.length - 1; li2++) {
-    for (a2 = 0; a2 < NPos[li2].length; a2++) for (b2 = 0; b2 < NPos[li2 + 1].length; b2++) {
-      var pa = NPos[li2][a2], pb = NPos[li2 + 1][b2];
-      nseg(pa[0], pa[1], pa[2], pb[0], pb[1], pb[2], li2);
-    }
-  }
-  var CUBE_X = 37, CS = 4.5;
-  var outN = NPos[3][0];
-  nseg(outN[0], outN[1], outN[2], CUBE_X - CS, 0, 0, 3);
-  (function cube() {
-    var s = CS, cx = CUBE_X, c, d2;
-    var v = [[-s,-s,-s],[s,-s,-s],[s,s,-s],[-s,s,-s],[-s,-s,s],[s,-s,s],[s,s,s],[-s,s,s]];
-    var ed = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
-    ed.forEach(function (e) { nseg(cx + v[e[0]][0], v[e[0]][1], v[e[0]][2], cx + v[e[1]][0], v[e[1]][1], v[e[1]][2], 3.5); });
-    for (c = -1; c <= 1; c += 1) { if (c === 0) { nseg(cx - s, 0, -s, cx + s, 0, -s, 3.5); nseg(cx - s, 0, s, cx + s, 0, s, 3.5); nseg(cx - s, 0, -s, cx - s, 0, s, 3.5); nseg(cx + s, 0, -s, cx + s, 0, s, 3.5); } }
-    d2 = 0;
-  })();
-  var nlg = new THREE.BufferGeometry();
-  nlg.setAttribute('position', new THREE.Float32BufferAttribute(LP, 3));
-  nlg.setAttribute('aT', new THREE.Float32BufferAttribute(LT, 1));
-  nlg.setAttribute('aL', new THREE.Float32BufferAttribute(LL, 1));
-  nlg.setAttribute('aR', new THREE.Float32BufferAttribute(LR, 1));
-  var NU = { uNet: { value: 0 }, uTime: U.uTime };
-  var netLines = new THREE.LineSegments(nlg, addMat(NU,
-    'attribute float aT, aL, aR; uniform float uNet, uTime; varying float vA; varying float vP; void main(){ float cubeE = step(3.2, aL); float pulse = pow(0.5 + 0.5 * sin(uTime * 2.4 - aL * 1.9 + aR * 6.2831 - aT * 1.4), 7.0); float cur = 0.5 + 0.5 * sin(uTime * 1.4); vA = uNet * mix(0.12 + 0.85 * pulse, 0.3 + 0.5 * cur, cubeE); vP = mix(pulse, 0.9, cubeE); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    'varying float vA; varying float vP; void main(){ gl_FragColor = vec4(mix(vec3(0.56, 0.78, 1.0), vec3(1.0, 0.82, 0.29), vP), vA); }'));
-  netLines.frustumCulled = false;
-  var NQ = [], NL = [];
-  NPos.forEach(function (arr, li) { arr.forEach(function (p) { NQ.push(p[0], p[1], p[2]); NL.push(li); }); });
-  var nqg = new THREE.BufferGeometry();
-  nqg.setAttribute('position', new THREE.Float32BufferAttribute(NQ, 3));
-  nqg.setAttribute('aL', new THREE.Float32BufferAttribute(NL, 1));
-  var netPts = new THREE.Points(nqg, new THREE.ShaderMaterial({
-    uniforms: { uNet: NU.uNet, uPx: U.uPx, uTime: U.uTime },
-    vertexShader: 'attribute float aL; uniform float uNet, uPx, uTime; varying float vA; varying float vL; void main(){ vL = aL; vec4 mv = modelViewMatrix * vec4(position, 1.0); vA = uNet * (0.7 + 0.3 * sin(uTime * 2.0 + aL * 1.6)); gl_PointSize = uPx * 4.2 * (380.0 / -mv.z); gl_Position = projectionMatrix * mv; }',
-    fragmentShader: 'varying float vA; varying float vL; void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; vec3 c = vL > 2.5 ? vec3(1.0, 0.82, 0.29) : vec3(0.78, 0.9, 1.0); gl_FragColor = vec4(c, vA * smoothstep(0.5, 0.08, d)); }',
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-  }));
-  netPts.frustumCulled = false;
-  net.add(netLines); net.add(netPts);
-  net.position.set(-10, 40, 0);
-  net.visible = false;
-  scene.add(net);
-
-  /* drifting dust for depth */
-  var DP = [], dn = 650;
-  for (i = 0; i < dn; i++) {
-    var rad = 40 + Math.random() * 130, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
-    DP.push(rad * Math.sin(ph) * Math.cos(th), rad * Math.cos(ph) * 0.8 + 30, rad * Math.sin(ph) * Math.sin(th));
-  }
-  var dg = new THREE.BufferGeometry();
-  dg.setAttribute('position', new THREE.Float32BufferAttribute(DP, 3));
-  var dc = document.createElement('canvas'); dc.width = dc.height = 64;
-  var dx = dc.getContext('2d'), grad = dx.createRadialGradient(32, 32, 0, 32, 32, 32);
-  grad.addColorStop(0, 'rgba(255,255,255,1)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
-  dx.fillStyle = grad; dx.fillRect(0, 0, 64, 64);
-  var dust = new THREE.Points(dg, new THREE.PointsMaterial({
-    size: 1.4, map: new THREE.CanvasTexture(dc), color: 0x8fc1ee, transparent: true, opacity: 0.55,
-    depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true
-  }));
-  dust.frustumCulled = false;
-  scene.add(dust);
-
-  /* ----- labels pinned to points in the 3D scene (desktop) ----- */
-  var tagsEl = document.getElementById('tags3d'), tags = [], tv = new THREE.Vector3();
-  function clamp01(v) { return Math.max(0, Math.min(1, v)); }
-  function addTag(text, group, px, py, pz, align, fn) {
-    var el = document.createElement('div');
-    el.className = 't3 ' + align; el.textContent = text;
-    tagsEl.appendChild(el);
-    tags.push({ el: el, g: group, v: new THREE.Vector3(px, py, pz), a: align, f: fn, on: false });
-  }
-  gnodes.forEach(function (nd) {
-    addTag(nd.n, ghGraph, nd.x, nd.y + (nd.sl !== undefined ? 0.9 : 0), 0, 'c', function () { return clamp01((S.gh - nd.o) / 0.06); });
-  });
-  ['RHA', 'Cement', 'Water', 'Fine agg.', 'Coarse agg.', 'Plasticiser'].forEach(function (nm, k) {
-    var p = NPos[0][k];
-    addTag(nm, net, p[0], p[1], p[2], 'l', function () { return clamp01((S.net - 0.4) / 0.5); });
-  });
-  addTag('28-day strength', net, CUBE_X, -CS - 3.5, 0, 'c', function () { return clamp01((S.net - 0.4) / 0.5); });
-  addTag('Excel schedule', beamDoc, -28, 48.6, 0, 'c', function () { return clamp01((S.draw - bnx(-28)) / 0.05); });
-  addTag('AutoCAD beam elevation', beamDoc, 10, 51, 0, 'c', function () { return clamp01((S.draw - bnx(10)) / 0.05); });
-  function updateTags(w, h, mobile) {
-    var q, t, o, sx2, sy2, off;
-    camera.updateMatrixWorld();
-    scene.updateMatrixWorld(true);
-    for (q = 0; q < tags.length; q++) {
-      t = tags[q];
-      o = mobile ? 0 : t.f();
-      if (o < 0.02) { if (t.on) { t.el.style.opacity = 0; t.on = false; } continue; }
-      t.on = true;
-      tv.copy(t.v); t.g.localToWorld(tv); tv.project(camera);
-      sx2 = (tv.x * 0.5 + 0.5) * w; sy2 = (-tv.y * 0.5 + 0.5) * h;
-      off = t.a === 'l' ? '-100%' : (t.a === 'c' ? '-50%' : '0');
-      t.el.style.opacity = o.toFixed(2);
-      t.el.style.transform = 'translate(' + sx2.toFixed(1) + 'px,' + sy2.toFixed(1) + 'px) translate(' + off + ',-50%)';
-    }
-  }
-
-  /* ----- sizing: full screen on desktop, a stage at the top on phones ----- */
-  var W = 0, Hs = 0;
-  function resize() {
-    var w = window.innerWidth, h = window.innerHeight;
-    if (w === W && Math.abs(h - Hs) < 100) return;
-    W = w; Hs = h;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  /* ----- pointer parallax ----- */
-  var mx = 0, my = 0, tx = 0, ty = 0;
-  if (!coarse && !reduce) {
-    window.addEventListener('pointermove', function (e) {
-      tx = (e.clientX / window.innerWidth) * 2 - 1;
-      ty = (e.clientY / window.innerHeight) * 2 - 1;
-    }, { passive: true });
-  }
-
-  /* ----- gauge ----- */
-  var gMark = document.getElementById('gMark'), gText = document.getElementById('gText'), lastG = '';
-  function updateGauge(b) {
-    var v = Math.max(0, Math.min(1, b));
-    var fl = Math.round(v * FLOORS);
-    var txt = 'L' + (fl < 10 ? '0' : '') + fl + '  +' + (v * H).toFixed(1) + ' m';
-    if (txt !== lastG) { gText.textContent = txt; gMark.style.setProperty('--p', (v * 100).toFixed(2) + '%'); lastG = txt; }
-  }
-
-  /* ----- render loop ----- */
-  var tmpTarget = new THREE.Vector3();
-  function frame(ms) {
-    requestAnimationFrame(frame);
-    var time = reduce ? 3.0 : ms * 0.001;
-    mx += (tx - mx) * 0.06; my += (ty - my) * 0.06;
-    var mobile = window.innerWidth < 900;
-    var eff = S.build * S.intro;
-    U.uTime.value = time;
-    U.uBuild.value = eff;
-    U.uTwist.value = S.twist;
-    U.uTower.value = S.tower * (mobile ? 0.8 : 1);
-    U.uHL.value.set(S.foot, S.sec, S.beam, S.brace);
-    NU.uNet.value = S.net;
-    net.visible = S.net > 0.01;
-    net.rotation.y = 0.12 + Math.sin(time * 0.25) * 0.15;
-    BU.uDraw.value = S.draw;
-    beamDoc.visible = S.draw > 0.001;
-    GU.uGH.value = S.gh;
-    GU.uSlide0.value = Math.max(0, Math.min(1, eff)) * 0.8;
-    GU.uSlide1.value = S.twist / 1.5;
-    ghGraph.visible = S.gh > 0.001;
-
-    var az = S.az + (reduce ? 0 : Math.sin(time * 0.12) * 0.05) + mx * 0.1;
-    var el = S.el + my * 0.03;
-    var dist = S.dist * (camera.aspect < 0.9 ? 1.25 : 1);
-    var fit = S.wid / (2 * 0.2867 * camera.aspect);
-    if (fit > dist) dist = fit;
-    tmpTarget.set(S.tx, S.ty, 0);
-    camera.position.set(
-      S.tx + dist * Math.cos(el) * Math.sin(az),
-      S.ty + dist * Math.sin(el),
-      dist * Math.cos(el) * Math.cos(az)
-    );
-    camera.lookAt(tmpTarget);
-    camera.setViewOffset(W, Hs, -(mobile ? 0 : S.sx) * W, mobile ? -S.sy * Hs : 0, W, Hs);
-
-    var bv = Math.min(eff, 1);
-    plate.position.y = bv * H;
-    plate.rotation.y = -S.twist * bv;
-    plate.visible = eff > 0.01 && eff < 0.995 && S.tower > 0.3;
-    dust.rotation.y = time * 0.01;
-    updateGauge(eff);
-    renderer.render(scene, camera);
-    updateTags(W, Hs, mobile);
-  }
-  requestAnimationFrame(frame);
-
-  /* ----- smooth scroll ----- */
-  var lenis = null;
-  if (!reduce && window.Lenis) {
-    lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
-    lenis.on('scroll', ScrollTrigger.update);
+  if (window.gsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
+  if (!reduce && window.Lenis && window.gsap) {
+    var lenis = new Lenis({ lerp: 0.085, smoothWheel: true });
+    window.__lenis = lenis;
+    if (window.ScrollTrigger) lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add(function (t) { lenis.raf(t * 1000); });
     gsap.ticker.lagSmoothing(0);
-    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
-      a.addEventListener('click', function (e) {
-        var id = a.getAttribute('href');
-        var el = id.length > 1 ? document.querySelector(id) : null;
-        var off = -20;
-        if (id === '#top') { e.preventDefault(); lenis.scrollTo(0); }
-        else if (el) { e.preventDefault(); lenis.scrollTo(el, { offset: off }); }
-      });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest ? e.target.closest('a[href^="#"]') : null; if (!a) return;
+      var id = a.getAttribute('href'); if (id.length < 2) { e.preventDefault(); lenis.scrollTo(0); return; }
+      var el = document.querySelector(id); if (!el) return;
+      e.preventDefault(); lenis.scrollTo(el, { offset: 0, duration: 1.6 });
     });
   }
 
-  /* ----- scroll timeline: camera and structure keyframes tied to sections ----- */
-  var tl = null;
-  var stops = [
-    ['#work', K.work],
-    ['[data-k="gh"]', K.gh0], ['[data-k="gh"] .project-media', K.gh1], ['[data-k="gh"] details', K.gh2],
-    ['[data-k="found"]', K.found], ['[data-k="valid"]', K.valid], ['[data-k="beam"]', K.beam],
-    ['[data-k="rha"]', K.rha], ['[data-k="next"]', K.next],
-    ['#experience', K.exp], ['#skills', K.skills], ['#contact', K.contact]
-  ];
-  function copy(o) { var c = {}; for (var k in o) c[k] = o[k]; return c; }
-
-  function buildTimeline() {
-    if (tl) { if (tl.scrollTrigger) tl.scrollTrigger.kill(); tl.kill(); tl = null; }
-    var vh = window.innerHeight;
-    var total = Math.max(1, document.documentElement.scrollHeight - vh);
-    var sy = window.scrollY || 0;
-    var mobile = window.innerWidth < 900;
-    var topLine = vh * 0.3;
-    tl = gsap.timeline({
-      defaults: { ease: 'power1.inOut' },
-      scrollTrigger: { trigger: document.body, start: 'top top', end: 'bottom bottom', scrub: reduce ? true : 1.1 }
-    });
-    var prevEnd = 0, prevK = K.hero;
-    stops.forEach(function (s) {
-      var el = document.querySelector(s[0]);
-      if (!el) return;
-      var top = el.getBoundingClientRect().top + sy;
-      var end = Math.max(prevEnd + 60, top - topLine);
-      end = Math.min(end, total - 1);
-      var start = Math.max(prevEnd, end - vh * 0.85);
-      var vars = copy(s[1]);
-      vars.duration = Math.max(0.0001, (end - start) / total);
-      vars.immediateRender = false;
-      vars.ease = (s[0].indexOf('project-media') > -1 || s[0] === '[data-k="gh"]') ? 'none' : 'power1.inOut';
-      tl.fromTo(S, copy(prevK), vars, start / total);
-      prevEnd = end; prevK = s[1];
-    });
-    tl.set({}, {}, 1);
+  /* chapter text fades, HUD, progress bar */
+  var chs = Array.prototype.map.call(document.querySelectorAll('.ch'), function (el) {
+    return { el: el, stick: el.querySelector('.ch-stick'), text: el.querySelector('.ch-text'), top: 0, span: 1 };
+  });
+  var plains = Array.prototype.slice.call(document.querySelectorAll('[data-pl]'));
+  var names = ['Structural engineer', 'The work', 'Grasshopper AI', 'Foundation tool', 'Property validator', 'Beam schedule', 'Rice husk ash', 'In development'];
+  var hudN = document.getElementById('hudN'), hudT = document.getElementById('hudT'), bar = document.getElementById('bar');
+  function measure() {
+    var y = window.scrollY || 0, vh = window.innerHeight;
+    chs.forEach(function (c) { c.top = c.el.getBoundingClientRect().top + y; c.span = Math.max(1, c.el.offsetHeight - vh); });
   }
-
-  var bar = document.getElementById('progress');
-  function updateBar() {
+  function sm(a, b, x) { var t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
+  var lastIdx = -1;
+  function frame() {
+    var y = window.scrollY || 0, idx = 0;
+    for (var i = 0; i < chs.length; i++) {
+      var c = chs[i], p = (y - c.top) / c.span, o;
+      if (i === 0) o = 1 - sm(0.35, 0.95, p);
+      else o = sm(-0.2, 0.06, p) * (1 - sm(0.84, 1.0, p));
+      if (window.__introHold && i === 0) o = 0;
+      c.text.style.opacity = o.toFixed(3);
+      c.text.style.transform = 'translate3d(0,' + ((1 - o) * 26).toFixed(1) + 'px,0)';
+      c.text.style.visibility = o < 0.01 ? 'hidden' : 'visible';
+      c.stick.style.setProperty('--o', o.toFixed(3));
+      if (p > -0.35) idx = i;
+    }
+    var pastAll = plains.length && plains[0].getBoundingClientRect().top < window.innerHeight * 0.5;
+    if (idx !== lastIdx) { hudN.textContent = ('0' + (idx + 1)).slice(-2); hudT.textContent = names[idx]; lastIdx = idx; }
+    document.querySelector('.hud-r').style.opacity = pastAll ? 0 : 1;
     var max = document.documentElement.scrollHeight - window.innerHeight;
-    bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, (window.scrollY || 0) / max) : 0) + ')';
+    bar.style.transform = 'scaleX(' + (max > 0 ? y / max : 0).toFixed(4) + ')';
+    requestAnimationFrame(frame);
   }
-  window.addEventListener('scroll', updateBar, { passive: true });
+  measure();
+  window.addEventListener('resize', measure);
+  window.addEventListener('load', measure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  window.__measureText = measure;
+  requestAnimationFrame(frame);
 
-  var band = document.getElementById('bandTrack');
-  if (band && !reduce) {
-    gsap.fromTo(band, { xPercent: 0 }, {
-      xPercent: -32, ease: 'none',
-      scrollTrigger: { trigger: band.parentNode, start: 'top bottom', end: 'bottom top', scrub: true }
-    });
-  }
-
+  /* hero title split into words */
   var h1 = document.getElementById('heroTitle');
-  function splitWords(el) {
-    var words = el.textContent.trim().split(/\s+/);
-    el.setAttribute('aria-label', words.join(' '));
-    el.textContent = '';
-    words.forEach(function (w, idx) {
-      var o = document.createElement('span'); o.className = 'w'; o.setAttribute('aria-hidden', 'true');
-      var inn = document.createElement('span'); inn.className = 'wi'; inn.textContent = w;
-      o.appendChild(inn); el.appendChild(o);
-      if (idx < words.length - 1) el.appendChild(document.createTextNode(' '));
+  (function split(node) {
+    Array.prototype.slice.call(node.childNodes).forEach(function (n) {
+      if (n.nodeType === 3) {
+        var frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(function (w) {
+          if (!w) return;
+          if (/^\s+$/.test(w)) { frag.appendChild(document.createTextNode(' ')); return; }
+          var o = document.createElement('span'); o.className = 'w';
+          var i = document.createElement('span'); i.className = 'wi'; i.textContent = w;
+          o.appendChild(i); frag.appendChild(o);
+        });
+        node.replaceChild(frag, n);
+      } else if (n.nodeType === 1) split(n);
     });
-    return el.querySelectorAll('.wi');
-  }
-  if (!reduce) {
-    var inners = splitWords(h1);
-    gsap.from(inners, { yPercent: 115, duration: 1.15, ease: 'expo.out', stagger: 0.07, delay: 0.1 });
-    gsap.from('.hero-sub, .hero-cta, .dims', { opacity: 0, y: 14, duration: 0.9, ease: 'power2.out', stagger: 0.12, delay: 0.65 });
-    gsap.to(S, { intro: 1, duration: 3.2, ease: 'power2.out', delay: 0.15 });
-  }
+  })(h1);
 
-  if (!coarse && !reduce) {
-    var cur = document.getElementById('cursor');
-    var qx = gsap.quickTo(cur, 'x', { duration: 0.25, ease: 'power3' });
-    var qy = gsap.quickTo(cur, 'y', { duration: 0.25, ease: 'power3' });
-    window.addEventListener('pointermove', function (e) { qx(e.clientX); qy(e.clientY); cur.classList.add('on'); }, { passive: true });
-    document.addEventListener('pointerover', function (e) {
-      var hot = e.target.closest && e.target.closest('a, button, summary');
-      cur.classList.toggle('hot', !!hot);
-    });
-    document.addEventListener('mouseleave', function () { cur.classList.remove('on'); });
-    document.querySelectorAll('.btn, .nav-cta').forEach(function (b) {
-      b.addEventListener('pointermove', function (e) {
-        var rc = b.getBoundingClientRect();
-        gsap.to(b, { x: (e.clientX - (rc.left + rc.width / 2)) * 0.22, y: (e.clientY - (rc.top + rc.height / 2)) * 0.3, duration: 0.3, ease: 'power2.out' });
-      });
-      b.addEventListener('pointerleave', function () { gsap.to(b, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1, 0.5)' }); });
-    });
+  /* loader → intro */
+  var loader = document.getElementById('loader'), pc = document.getElementById('pc');
+  var t0 = performance.now(), minT = reduce ? 0 : 1100, maxT = 5000, shown = 0;
+  if (!reduce && window.gsap) {
+    window.__introHold = true;
+    gsap.set(h1.querySelectorAll('.wi'), { yPercent: 110 });
   }
-
-  var rebuildTimer;
-  function scheduleBuild() { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(function () { resize(); buildTimeline(); ScrollTrigger.refresh(); }, 200); }
-  buildTimeline();
-  updateBar();
-  window.addEventListener('load', scheduleBuild);
-  window.addEventListener('resize', scheduleBuild);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleBuild);
+  function finish() {
+    loader.classList.add('done');
+    window.__introHold = false;
+    if (!reduce && window.gsap) {
+      var heroText = chs[0].text;
+      gsap.fromTo(heroText.querySelectorAll('.num, .hero-sub, .btns'), { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 1, stagger: 0.12, delay: 0.55, ease: 'power3.out', clearProps: 'opacity,transform' });
+      gsap.to(h1.querySelectorAll('.wi'), { yPercent: 0, duration: 1.15, stagger: 0.06, delay: 0.2, ease: 'power4.out' });
+    }
+    window.dispatchEvent(new Event('intro'));
+  }
+  (function tick() {
+    var el = performance.now() - t0, ready = !!window.__glReady || el > maxT;
+    var target = ready ? 100 : Math.min(90, el / 18);
+    shown += (target - shown) * 0.18;
+    if (target === 100 && shown > 99.4) shown = 100;
+    pc.textContent = ('00' + Math.round(shown)).slice(-3);
+    if (shown >= 100 && el > minT) return finish();
+    requestAnimationFrame(tick);
+  })();
 })();
+</script>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script>
+  setTimeout(function () { if (!window.__glReady) { document.documentElement.classList.add('no-gl'); window.__glReady = true; } }, 20000);
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const root = document.documentElement;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const finePointer = matchMedia('(pointer: fine)').matches;
+let mobile = matchMedia('(max-width: 900px)').matches;
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const sm = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+const lerp = (a, b, t) => a + (b - a) * t;
+
+/* ================= renderer ================= */
+const canvas = document.getElementById('gl');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  if (!renderer.getContext()) throw new Error('no ctx');
+} catch (e) { root.classList.add('no-gl'); window.__glReady = true; throw e; }
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.92;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const DPR = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 1.75);
+renderer.setPixelRatio(DPR);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 2500);
+const TAN = Math.tan(THREE.MathUtils.degToRad(15));
+
+function bgTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 1024;
+  const g = c.getContext('2d');
+  const r = g.createRadialGradient(650, 380, 0, 600, 520, 860);
+  r.addColorStop(0, '#22324a'); r.addColorStop(0.42, '#0e1624'); r.addColorStop(1, '#04060a');
+  g.fillStyle = r; g.fillRect(0, 0, 1024, 1024);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+scene.background = bgTexture();
+scene.fog = new THREE.Fog(0x0a0f18, 300, 900);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+/* lights */
+const key = new THREE.DirectionalLight(0xffe2c6, 2.1);
+key.position.set(-90, 170, 120);
+key.castShadow = true;
+key.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
+Object.assign(key.shadow.camera, { left: -95, right: 95, top: 120, bottom: -70, near: 20, far: 520 });
+key.shadow.bias = -0.0005; key.shadow.normalBias = 0.5;
+key.target.position.set(0, 30, 15);
+scene.add(key, key.target);
+const rim = new THREE.DirectionalLight(0x7aa8ff, 2.4); rim.position.set(140, 90, -160); scene.add(rim);
+const warmRim = new THREE.DirectionalLight(0xff9a50, 0.9); warmRim.position.set(-160, 40, -80); scene.add(warmRim);
+scene.add(new THREE.HemisphereLight(0x9fb8d8, 0x0a0c10, 0.35));
+
+/* ================= materials ================= */
+const ENV = 0.4;
+const M = {
+  slab: new THREE.MeshStandardMaterial({ color: 0xbdb8b0, roughness: 0.78, envMapIntensity: ENV }),
+  col: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.78, envMapIntensity: ENV }),
+  core: new THREE.MeshStandardMaterial({ color: 0xbdb8b0, roughness: 0.86, envMapIntensity: ENV }),
+  glass: new THREE.MeshPhysicalMaterial({ color: 0x9cc4ea, metalness: 0.15, roughness: 0.05, transparent: true, opacity: 0.3, envMapIntensity: 1.1, depthWrite: false, side: THREE.DoubleSide }),
+  steel: new THREE.MeshStandardMaterial({ color: 0x262b33, metalness: 0.85, roughness: 0.34, envMapIntensity: 1 }),
+  accent: new THREE.MeshStandardMaterial({ color: 0xff7a1a, metalness: 0.55, roughness: 0.32, emissive: 0xff5200, emissiveIntensity: 0.55, envMapIntensity: 1 }),
+  foot: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8, envMapIntensity: ENV }),
+};
+const towerMats = [M.slab, M.col, M.core, M.steel, M.accent];
+const BOX = new THREE.BoxGeometry(1, 1, 1);
+
+/* ================= tower data ================= */
+const NF = 28, FH = 3.6;
+const XS = [-15, -10, -5, 0, 5, 10, 15], ZS = [-12.5, -7.5, -2.5, 2.5, 7.5, 12.5];
+const COLS = [];
+XS.forEach(x => ZS.forEach(z => { if (!(x === 0 && Math.abs(z) === 2.5)) COLS.push([x, z]); }));
+const SLX = 17.2, SLZ = 14.7, CH = FH - 0.4, MID = FH / 2 - 0.2;
+const Q0 = new THREE.Quaternion();
+
+function itm(f, x, y, z, sx, sy, sz, extra) { return Object.assign({ f, p: [x, y, z], s: [sx, sy, sz], q: Q0, n: null }, extra || {}); }
+const slabs = [itm(0, 0, -0.2, 0, 2 * SLX + 2, 0.4, 2 * SLZ + 2)];
+const cols = [], cores = [], glass = [], mull = [], truss = [];
+for (let f = 0; f < NF; f++) {
+  slabs.push(itm(f, 0, FH - 0.2, 0, 2 * SLX, 0.4, 2 * SLZ));
+  COLS.forEach(([x, z], ci) => cols.push(itm(f, x, MID, z, 0.95, CH, 0.95, { ci })));
+  cores.push(itm(f, 3, MID, 0, 0.55, CH, 9.6), itm(f, -3, MID, 0, 0.55, CH, 9.6), itm(f, 0, MID, 4.5, 6.5, CH, 0.55), itm(f, 0, MID, -4.5, 6.5, CH, 0.55));
+  glass.push(itm(f, SLX - 0.55, MID, 0, 0.06, CH, 2 * SLZ - 1.1, { n: [1, 0] }), itm(f, -(SLX - 0.55), MID, 0, 0.06, CH, 2 * SLZ - 1.1, { n: [-1, 0] }),
+             itm(f, 0, MID, SLZ - 0.55, 2 * SLX - 1.1, CH, 0.06, { n: [0, 1] }), itm(f, 0, MID, -(SLZ - 0.55), 2 * SLX - 1.1, CH, 0.06, { n: [0, -1] }));
+  for (let z = -13.2; z <= 13.21; z += 2.93) { mull.push(itm(f, SLX - 0.5, MID, z, 0.16, CH, 0.12, { n: [1, 0] }), itm(f, -(SLX - 0.5), MID, z, 0.16, CH, 0.12, { n: [-1, 0] })); }
+  for (let x = -15.7; x <= 15.71; x += 3.14) { mull.push(itm(f, x, MID, SLZ - 0.5, 0.12, CH, 0.16, { n: [0, 1] }), itm(f, x, MID, -(SLZ - 0.5), 0.12, CH, 0.16, { n: [0, -1] })); }
+}
+/* belt trusses + outriggers (two storeys deep) */
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
+function member(f, a, b, w) {
+  _a.set(...a); _b.set(...b); _d.subVectors(_b, _a); const len = _d.length(); _d.normalize();
+  const q = new THREE.Quaternion().setFromUnitVectors(UP, _d);
+  truss.push(itm(f, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, w, len, w, { q }));
+}
+[9, 19].forEach(f => {
+  const h = 2 * FH - 0.4;
+  for (let i = 0; i < ZS.length - 1; i++) for (const x of [15.6, -15.6]) { member(f, [x, 0, ZS[i]], [x, h, ZS[i + 1]], 0.45); member(f, [x, 0, ZS[i + 1]], [x, h, ZS[i]], 0.45); }
+  for (let i = 0; i < XS.length - 1; i++) for (const z of [13.1, -13.1]) { member(f, [XS[i], 0, z], [XS[i + 1], h, z], 0.45); member(f, [XS[i + 1], 0, z], [XS[i], h, z], 0.45); }
+  for (const z of [2.5, -2.5]) for (const sgn of [1, -1]) {
+    const xs = [3, 5, 10, 15].map(v => v * sgn);
+    for (let i = 0; i < 3; i++) { member(f, [xs[i], 0, z], [xs[i + 1], h, z], 0.55); member(f, [xs[i + 1], 0, z], [xs[i], h, z], 0.55); }
+  }
+});
+
+function inst(items, mat, opts = {}) {
+  const m = new THREE.InstancedMesh(BOX, mat, items.length);
+  m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  m.castShadow = !opts.noShadow; m.receiveShadow = !opts.noReceive;
+  m.frustumCulled = false; m.userData.items = items;
+  if (opts.order) m.renderOrder = opts.order;
+  scene.add(m); return m;
+}
+const mSlab = inst(slabs, M.slab), mCol = inst(cols, M.col), mCore = inst(cores, M.core);
+const mMull = inst(mull, M.steel), mTruss = inst(truss, M.accent);
+const mGlass = inst(glass, M.glass, { noShadow: true, noReceive: true, order: 2 });
+const CONC = new THREE.Color(0xd2cdc5), PASS = new THREE.Color(0x9fe6c2), BAD = new THREE.Color(0xff3a2a);
+const _c = new THREE.Color();
+cols.forEach((_, i) => mCol.setColorAt(i, CONC));
+
+/* crown */
+const crown = new THREE.Group(); scene.add(crown);
+const plant = new THREE.Mesh(BOX, M.steel); plant.scale.set(12, 3.6, 9); plant.position.y = FH + 1.8; plant.castShadow = true; crown.add(plant);
+const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.6, 20, 12), M.steel); mast.position.y = FH + 13.6; mast.castShadow = true; crown.add(mast);
+const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(6, 0.5, 0.25) }));
+beacon.position.y = FH + 23.8; crown.add(beacon);
+
+/* ghost storeys (in development) */
+const ghost = new THREE.Group(); scene.add(ghost);
+const ghostMat = new THREE.LineBasicMaterial({ color: new THREE.Color(2.4, 1.1, 0.35), transparent: true, opacity: 0, depthWrite: false });
+{
+  const eg = new THREE.EdgesGeometry(new THREE.BoxGeometry(2 * SLX, FH, 2 * SLZ));
+  for (let k = 0; k < 5; k++) { const l = new THREE.LineSegments(eg, ghostMat); l.position.y = NF * FH + FH * k + FH / 2 + 0.2; ghost.add(l); }
+  const ce = new THREE.EdgesGeometry(new THREE.BoxGeometry(6.5, FH * 5, 9.6));
+  const cl = new THREE.LineSegments(ce, ghostMat); cl.position.y = NF * FH + FH * 2.5 + 0.2; ghost.add(cl);
+}
+
+/* footings (one per column) */
+const raw = COLS.map(([x, z], i) => {
+  const edge = (Math.abs(x) === 15 ? 1 : 0) + (Math.abs(z) === 12.5 ? 1 : 0);
+  const base = edge === 2 ? 2.7 : edge === 1 ? 3.5 : 4.4;
+  const n = Math.sin(i * 12.9898 + x * 3.1 + z * 7.7) * 43758.5453; return base + ((n - Math.floor(n)) - 0.5) * 0.9;
+});
+const order = raw.map((v, i) => i).sort((a, b) => raw[a] - raw[b]);
+const grp = new Array(40), gsize = new Array(40);
+order.forEach((idx, rank) => { grp[idx] = Math.min(14, Math.floor(rank * 15 / 40)); });
+for (let g = 0; g < 15; g++) { const mem = order.filter(i => grp[i] === g); const mx = Math.max(...mem.map(i => raw[i])); mem.forEach(i => gsize[i] = Math.ceil(mx * 5) / 5); }
+const GCOL = [...Array(15)].map((_, g) => new THREE.Color().setHSL((0.02 + g * 0.045) % 1, 0.8, 0.52));
+const mFoot = new THREE.InstancedMesh(BOX, M.foot, 40); mFoot.castShadow = mFoot.receiveShadow = true; mFoot.frustumCulled = false; scene.add(mFoot);
+for (let i = 0; i < 40; i++) mFoot.setColorAt(i, CONC);
+const mPed = new THREE.InstancedMesh(BOX, M.core, 40); mPed.castShadow = true; mPed.frustumCulled = false; scene.add(mPed);
+
+/* ground */
+function groundTex() {
+  const c = document.createElement('canvas'); c.width = c.height = 1024; const g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, 1024, 1024);
+  g.strokeStyle = 'rgba(0,0,0,0.0)';
+  const a = document.createElement('canvas'); a.width = a.height = 512; const ga = a.getContext('2d');
+  const r = ga.createRadialGradient(256, 256, 0, 256, 256, 256); r.addColorStop(0, '#fff'); r.addColorStop(0.35, '#d0d0d0'); r.addColorStop(1, '#000');
+  ga.fillStyle = r; ga.fillRect(0, 0, 512, 512);
+  const grid = document.createElement('canvas'); grid.width = grid.height = 1024; const gg = grid.getContext('2d');
+  gg.fillStyle = '#10161f'; gg.fillRect(0, 0, 1024, 1024);
+  gg.strokeStyle = 'rgba(150,180,220,0.13)'; gg.lineWidth = 1.5;
+  for (let i = 0; i <= 1024; i += 1024 / 64) { gg.beginPath(); gg.moveTo(i, 0); gg.lineTo(i, 1024); gg.stroke(); gg.beginPath(); gg.moveTo(0, i); gg.lineTo(1024, i); gg.stroke(); }
+  const map = new THREE.CanvasTexture(grid); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8;
+  return { map, alpha: new THREE.CanvasTexture(a) };
+}
+const GT = groundTex();
+const groundMat = new THREE.MeshStandardMaterial({ map: GT.map, alphaMap: GT.alpha, transparent: true, roughness: 0.92, metalness: 0, envMapIntensity: 0.25 });
+const ground = new THREE.Mesh(new THREE.CircleGeometry(260, 64), groundMat);
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.42; ground.receiveShadow = true; ground.renderOrder = 1; scene.add(ground);
+
+/* ================= beam with reinforcement ================= */
+const beamRig = new THREE.Group(); scene.add(beamRig);
+const BL = 16, BD = 1.6, BB = 0.8, CV = 0.15;
+const concMat = new THREE.MeshPhysicalMaterial({ color: 0xd8d3cb, roughness: 0.82, envMapIntensity: 0.6, transparent: true, opacity: 1 });
+const beamBody = new THREE.Mesh(new THREE.BoxGeometry(BL, BD, BB), concMat); beamBody.castShadow = true; beamBody.renderOrder = 3; beamRig.add(beamBody);
+[-1, 1].forEach(s => { const c = new THREE.Mesh(new THREE.BoxGeometry(1.1, 7, 1.1), concMat); c.position.x = s * (BL / 2 + 0.55); c.castShadow = true; c.renderOrder = 3; beamRig.add(c); });
+const rebarMat = new THREE.MeshStandardMaterial({ color: 0xff8a3d, metalness: 0.7, roughness: 0.33, emissive: 0xff5a10, emissiveIntensity: 0.7 });
+const stirMat = new THREE.MeshStandardMaterial({ color: 0xffc98a, metalness: 0.6, roughness: 0.35, emissive: 0xff9a40, emissiveIntensity: 0.35 });
+function barCurve(y, z, hook) {
+  const e = BL / 2 + 0.6, h = 1.2, r = 0.28, pts = [];
+  const arc = (cx, cy, a0, a1) => { for (let k = 0; k <= 8; k++) { const a = a0 + (a1 - a0) * k / 8; pts.push(new THREE.Vector3(cx + Math.cos(a) * r, cy + Math.sin(a) * r, z)); } };
+  pts.push(new THREE.Vector3(-e, y + hook * h, z));
+  if (hook < 0) arc(-e + r, y - r, Math.PI, Math.PI / 2); else arc(-e + r, y + r, Math.PI, Math.PI * 1.5);
+  pts.push(new THREE.Vector3(0, y, z));
+  if (hook < 0) arc(e - r, y - r, Math.PI / 2, 0); else arc(e - r, y + r, -Math.PI / 2, 0);
+  pts.push(new THREE.Vector3(e, y + hook * h, z));
+  return new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+}
+const bars = [];
+[[BD / 2 - CV, -1], [-BD / 2 + CV, 1]].forEach(([y, hook]) => {
+  [-BB / 2 + CV, 0, BB / 2 - CV].forEach(z => {
+    const g = new THREE.TubeGeometry(barCurve(y, z, hook), 260, 0.06, 8, false);
+    const m = new THREE.Mesh(g, rebarMat); m.castShadow = true; beamRig.add(m); bars.push(m);
+  });
+});
+function stirCurve() {
+  const w = BB / 2 - CV + 0.08, h = BD / 2 - CV + 0.08, r = 0.09, pts = [];
+  const cs = [[w - r, h - r, 0], [-w + r, h - r, Math.PI / 2], [-w + r, -h + r, Math.PI], [w - r, -h + r, Math.PI * 1.5]];
+  cs.forEach(([cz, cy, a0]) => { for (let k = 0; k <= 6; k++) { const a = a0 + (Math.PI / 2) * k / 6; pts.push(new THREE.Vector3(0, cy + Math.sin(a) * r, cz + Math.cos(a) * r)); } });
+  return new THREE.CatmullRomCurve3(pts, true, 'centripetal');
+}
+const stirX = [];
+for (let x = -BL / 2 + 0.25; x <= -BL / 2 + 3.2; x += 0.32) stirX.push(x);
+for (let x = -BL / 2 + 3.8; x <= BL / 2 - 3.7; x += 0.62) stirX.push(x);
+for (let x = BL / 2 - 3.2; x <= BL / 2 - 0.24; x += 0.32) stirX.push(x);
+const mStir = new THREE.InstancedMesh(new THREE.TubeGeometry(stirCurve(), 64, 0.035, 6, true), stirMat, stirX.length);
+{ const m4 = new THREE.Matrix4(); stirX.forEach((x, i) => { m4.makeTranslation(x, 0, 0); mStir.setMatrixAt(i, m4); }); }
+mStir.castShadow = true; beamRig.add(mStir);
+
+function textPlane(draw, w, h, px = 128) {
+  const c = document.createElement('canvas'); c.width = Math.round(w * px); c.height = Math.round(h * px);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false, opacity: 0 });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  mesh.userData.redraw = () => { const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); draw(g, c.width, c.height); tex.needsUpdate = true; };
+  mesh.userData.redraw(); mesh.renderOrder = 5; return mesh;
+}
+const MONO = '"IBM Plex Mono", ui-monospace, monospace';
+const beamMark = textPlane((g, W, H) => {
+  g.fillStyle = '#f3efe7'; g.font = `500 ${H * 0.42}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('B12  ·  300 × 600  ·  3T20 / 3T20  ·  T10@150', W / 2, H / 2);
+}, 14, 1.0);
+beamMark.position.set(0, BD / 2 + 1.25, 0); beamRig.add(beamMark);
+const dimLine = textPlane((g, W, H) => {
+  g.strokeStyle = '#ffc47a'; g.fillStyle = '#ffc47a'; g.lineWidth = 3;
+  const y = H * 0.32, x0 = W * 0.02, x1 = W * 0.98;
+  g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y); g.stroke();
+  [x0, x1].forEach(x => { g.beginPath(); g.moveTo(x, y - H * 0.22); g.lineTo(x, y + H * 0.22); g.stroke(); g.beginPath(); g.moveTo(x - 10, y + 10); g.lineTo(x + 10, y - 10); g.stroke(); });
+  g.font = `500 ${H * 0.36}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText('8000', W / 2, y + H * 0.14);
+}, BL, 1.3);
+dimLine.position.set(0, -BD / 2 - 1.05, 0); beamRig.add(dimLine);
+const sheet = textPlane((g, W, H) => {
+  g.fillStyle = 'rgba(14,20,30,0.92)'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(243,239,231,0.25)'; g.lineWidth = 2; g.strokeRect(1, 1, W - 2, H - 2);
+  const head = ['Beam', 'b × d', 'Top', 'Bottom', 'Stirrups'], rows = [['B10', '230×450', '2T16', '3T16', 'T8@150'], ['B11', '230×600', '3T16', '3T20', 'T8@125'], ['B12', '300×600', '3T20', '3T20', 'T10@150'], ['B13', '300×750', '4T20', '4T25', 'T10@125'], ['B14', '230×450', '2T16', '2T20', 'T8@150']];
+  const cw = [0.14, 0.22, 0.18, 0.2, 0.26], rh = H / 7.2; let x;
+  g.fillStyle = 'rgba(255,122,26,0.95)'; g.fillRect(0, 0, W, rh * 1.2);
+  g.font = `600 ${rh * 0.46}px ${MONO}`; g.textBaseline = 'middle';
+  x = W * 0.03; g.fillStyle = '#140800'; head.forEach((t, i) => { g.fillText(t, x, rh * 0.6); x += W * cw[i]; });
+  g.font = `400 ${rh * 0.46}px ${MONO}`;
+  rows.forEach((r, j) => {
+    const y = rh * 1.2 + rh * (j + 0.6) + j * 4;
+    if (j === 2) { g.fillStyle = 'rgba(255,196,122,0.18)'; g.fillRect(0, y - rh * 0.55, W, rh * 1.1); }
+    g.strokeStyle = 'rgba(243,239,231,0.12)'; g.beginPath(); g.moveTo(0, y + rh * 0.55); g.lineTo(W, y + rh * 0.55); g.stroke();
+    x = W * 0.03; g.fillStyle = j === 2 ? '#ffc47a' : '#c9d0db'; r.forEach((t, i) => { g.fillText(t, x, y); x += W * cw[i]; });
+  });
+  g.fillStyle = 'rgba(243,239,231,0.55)'; g.font = `500 ${rh * 0.38}px ${MONO}`; g.fillText('beam_schedule.xlsx', W * 0.03, H - rh * 0.45);
+}, 9, 4.6);
+sheet.position.set(-3.6, 5.2, -2.8); sheet.rotation.y = 0.18; sheet.scale.setScalar(0.82); beamRig.add(sheet);
+
+/* ================= concrete cube in a press ================= */
+const cubeRig = new THREE.Group(); scene.add(cubeRig);
+function concreteTex() {
+  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+  g.fillStyle = '#b9b3a9'; g.fillRect(0, 0, 512, 512);
+  const img = g.getImageData(0, 0, 512, 512), d = img.data;
+  for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * 34; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+  g.putImageData(img, 0, 0);
+  for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(${150 + Math.random() * 70},${140 + Math.random() * 60},${120 + Math.random() * 60},0.55)`; g.beginPath(); g.ellipse(Math.random() * 512, Math.random() * 512, 2 + Math.random() * 7, 2 + Math.random() * 5, Math.random() * 3, 0, 7); g.fill(); }
+  for (let i = 0; i < 520; i++) { g.fillStyle = 'rgba(40,36,32,0.6)'; g.beginPath(); g.arc(Math.random() * 512, Math.random() * 512, 0.6 + Math.random() * 1.8, 0, 7); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const CT = concreteTex();
+const cubeMat = new THREE.MeshStandardMaterial({ map: CT, bumpMap: CT, bumpScale: 0.6, roughness: 0.95, envMapIntensity: 0.5 });
+const cube = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), cubeMat); cube.castShadow = cube.receiveShadow = true; cubeRig.add(cube);
+const platenMat = new THREE.MeshStandardMaterial({ color: 0x8d949e, metalness: 0.92, roughness: 0.22, envMapIntensity: 1.2 });
+const pBot = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.6, 0.9, 48), platenMat); pBot.position.y = -2.45; pBot.castShadow = pBot.receiveShadow = true; cubeRig.add(pBot);
+const pTop = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.6, 0.9, 48), platenMat); pTop.castShadow = true; cubeRig.add(pTop);
+const rigSteel = M.steel.clone();
+const ram = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 1, 32), rigSteel); cubeRig.add(ram);
+const head = new THREE.Mesh(new THREE.BoxGeometry(14, 1.6, 3.2), rigSteel); head.position.y = 13; head.castShadow = true; cubeRig.add(head);
+const baseB = new THREE.Mesh(new THREE.BoxGeometry(14, 1.6, 3.2), rigSteel); baseB.position.y = -3.7; baseB.castShadow = baseB.receiveShadow = true; cubeRig.add(baseB);
+[-5.6, 5.6].forEach(x => { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 17, 16), platenMat); r.position.set(x, 4.6, 0); r.castShadow = true; cubeRig.add(r); });
+function crackTex(seed) {
+  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+  let s = seed; const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  g.strokeStyle = '#fff'; g.lineCap = 'round';
+  function walk(x, y, dx, len, w) { g.lineWidth = w; g.beginPath(); g.moveTo(x, y); for (let i = 0; i < len; i++) { x += dx * 6 + (rnd() - 0.5) * 16; y += 9 + rnd() * 6; g.lineTo(x, y); if (rnd() < 0.06 && w > 1.2) { g.stroke(); walk(x, y, (rnd() - 0.5) * 2.4, len - i, w * 0.6); g.lineWidth = w; g.beginPath(); g.moveTo(x, y); } } g.stroke(); }
+  walk(150 + rnd() * 60, 0, 0.5, 40, 4); walk(330 + rnd() * 60, 0, -0.6, 40, 3.4); walk(60, 120, 0.9, 24, 2.2);
+  return new THREE.CanvasTexture(c);
+}
+const crackMats = [];
+[[0, 0, 2.012, 0], [2.012, 0, 0, Math.PI / 2]].forEach(([x, y, z, ry], i) => {
+  const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(5, 1.6, 0.35), alphaMap: crackTex(97 + i * 31), transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), m); p.position.set(x, y, z); p.rotation.y = ry; cube.add(p); crackMats.push(m);
+});
+
+/* ================= validator scan + flags ================= */
+const scanMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.5, 2.6, 3.2), transparent: true, opacity: 0, toneMapped: false });
+const scan = new THREE.Group(); scene.add(scan);
+[[0, 15.6, 2 * SLX + 2.4, 0.18, 0.18], [0, -15.6, 2 * SLX + 2.4, 0.18, 0.18], [18.1, 0, 0.18, 0.18, 2 * SLZ + 2.0], [-18.1, 0, 0.18, 0.18, 2 * SLZ + 2.0]].forEach(([x, z, a, b, c]) => {
+  const m = new THREE.Mesh(BOX, scanMat); m.position.set(x, 0, z); m.scale.set(a, b, c); scan.add(m);
+});
+const scanFill = new THREE.Mesh(new THREE.PlaneGeometry(2 * SLX + 2.4, 2 * SLZ + 2.0), new THREE.MeshBasicMaterial({ color: 0x66d9ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+scanFill.rotation.x = -Math.PI / 2; scan.add(scanFill);
+const BADCOL = [{ f: 5, ci: COLS.findIndex(c => c[0] === 10 && c[1] === 12.5) }, { f: 16, ci: COLS.findIndex(c => c[0] === -15 && c[1] === 7.5) }];
+BADCOL.forEach(b => { b.idx = b.f * COLS.length + b.ci; });
+const flagMat = new THREE.LineBasicMaterial({ color: new THREE.Color(5, 0.5, 0.3), transparent: true, opacity: 0, toneMapped: false });
+const flagFill = new THREE.MeshBasicMaterial({ color: 0xff3a2a, transparent: true, opacity: 0, depthWrite: false });
+const flags = BADCOL.map(() => { const g = new THREE.Group(); g.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.6, CH + 0.6, 1.6)), flagMat)); g.add(new THREE.Mesh(new THREE.BoxGeometry(1.5, CH + 0.5, 1.5), flagFill)); scene.add(g); return g; });
+
+/* ================= state & keyframes ================= */
+const DEF = {
+  floors: NF, explode: 0, twist: 0, skin: 1, lift: 0, groundA: 1, footA: 0, groups: 0, scan: 0, check: 0,
+  towerA: 1, beamA: 0, beamDraw: 0, cubeA: 0, press: 0, ghost: 0,
+  tx: 0, ty: 50, tz: 0, az: 0.55, el: 0.1, dist: 235, sx: 0.17, sy: 0.17, wid: 44, hgt: 112, spin: 0
+};
+const mk = (base, o) => Object.assign({}, base, o);
+const K = {};
+K.hero = mk(DEF, { az: 0.5, el: 0.08, dist: 228, ty: 58, sx: 0.25, hgt: 138 });
+K.workA = mk(DEF, { az: 0.75, el: 0.14, dist: 240, ty: 52 });
+K.workB = mk(K.workA, { explode: 1, skin: 0.5, az: 1.05, el: 0.2, dist: 352, ty: 128, hgt: 268 });
+K.ghA = mk(DEF, { az: 0.6, el: 0.2, dist: 190, ty: 32, hgt: 76, wid: 50 });
+K.ghB = mk(K.ghA, { floors: 12, twist: 15, az: 0.15, el: 0.24, dist: 150, ty: 24, skin: 0.85, hgt: 66 });
+K.foundA = mk(DEF, { lift: 18, groundA: 0.12, footA: 1, az: 0.78, el: 0.36, dist: 128, ty: 2, hgt: 46, wid: 46, skin: 0.6 });
+K.foundB = mk(K.foundA, { groups: 1, az: 1.12, el: 0.4, dist: 122 });
+K.validA = mk(DEF, { az: 2.2, el: 0.06, dist: 245, ty: 50, check: 1, skin: 0.35 });
+K.validB = mk(K.validA, { scan: 1.06, az: 2.62, el: 0.1 });
+K.beamA = mk(DEF, { towerA: 0, skin: 0, beamA: 1, tx: 0, ty: 18.2, tz: 46, az: 0.14, el: 0.1, dist: 47, sx: 0.2, wid: 21, hgt: 15, sy: 0.24 });
+K.beamB = mk(K.beamA, { beamDraw: 1, az: -0.24, el: 0.16, dist: 44 });
+K.rhaA = mk(DEF, { towerA: 0, skin: 0, cubeA: 1, tx: 0, ty: 10.5, tz: 46, az: 0.6, el: 0.1, dist: 56, sx: 0.2, wid: 18, hgt: 24, sy: 0.3 });
+K.rhaB = mk(K.rhaA, { press: 1, az: 0.92, el: 0.14, dist: 50 });
+K.nextA = mk(DEF, { ghost: 1, az: 3.5, el: 0.2, dist: 285, ty: 62, hgt: 140 });
+K.nextB = mk(K.nextA, { az: 3.9, el: 0.24 });
+K.exp = mk(DEF, { az: 4.8, el: 0.3, dist: 300, ty: 48, sx: 0.22 });
+K.skills = mk(DEF, { az: 5.6, el: 0.12, dist: 280, ty: 50, sx: 0.22 });
+K.contact = mk(DEF, { az: 6.5, el: 0.06, dist: 250, ty: 50, sx: 0.22 });
+const S = Object.assign({}, K.hero);
+const I = { floors: reduce ? NF : 0, az: reduce ? 0 : -0.9, zoom: reduce ? 1 : 1.18 };
+
+/* ================= scroll timeline ================= */
+let tl = null, st = null;
+function build() {
+  const y0 = window.scrollY || 0, vh = window.innerHeight;
+  const stops = [[0, K.hero]];
+  const C = (sel) => { const el = document.querySelector(sel); const top = el.getBoundingClientRect().top + y0; return { top, span: Math.max(1, el.offsetHeight - vh) }; };
+  const chap = (sel, A, B) => { const c = C(sel); stops.push([c.top + 0.06 * c.span, A], [c.top + 0.7 * c.span, B]); };
+  chap('[data-ch="work"]', K.workA, K.workB);
+  chap('[data-ch="gh"]', K.ghA, K.ghB);
+  chap('[data-ch="found"]', K.foundA, K.foundB);
+  chap('[data-ch="valid"]', K.validA, K.validB);
+  chap('[data-ch="beam"]', K.beamA, K.beamB);
+  chap('[data-ch="rha"]', K.rhaA, K.rhaB);
+  chap('[data-ch="next"]', K.nextA, K.nextB);
+  [['#experience', K.exp], ['#skills', K.skills], ['#contact', K.contact]].forEach(([sel, k]) => { const c = C(sel); stops.push([Math.max(0, c.top - vh * 0.35), k]); });
+  const max = document.documentElement.scrollHeight - vh;
+  for (let i = 1; i < stops.length; i++) stops[i][0] = Math.min(Math.max(stops[i][0], stops[i - 1][0] + 1), max);
+  if (st) st.kill(); if (tl) tl.kill();
+  tl = gsap.timeline({ paused: true });
+  for (let i = 1; i < stops.length; i++) {
+    const [p0, a] = stops[i - 1], [p1, b] = stops[i];
+    tl.fromTo(S, Object.assign({}, a), Object.assign({}, b, { duration: Math.max(0.001, p1 - p0), ease: 'power1.inOut', immediateRender: false }), p0);
+  }
+  const end = stops[stops.length - 1][0];
+  st = ScrollTrigger.create({ start: 0, end, scrub: mobile ? 0.5 : 0.9, animation: tl });
+  tl.progress(clamp((window.scrollY || 0) / end));
+}
+
+/* ================= layout of instanced parts ================= */
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _qf = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
+const ST = [...Array(NF)].map(() => ({ y: 0, a: 0, v: 1, c: 1, s: 0 }));
+function storeys() {
+  const fl = Math.min(S.floors, I.floors);
+  for (let f = 0; f < NF; f++) {
+    let v = clamp(fl - f); v = v * v * (3 - 2 * v);
+    const t = ST[f];
+    t.v = v; t.y = f * FH * (1 + S.explode * 1.45) + S.lift + (1 - v) * 26;
+    t.a = THREE.MathUtils.degToRad(S.twist) * f;
+    t.c = Math.cos(t.a); t.s = Math.sin(t.a);
+  }
+}
+function placeTo(mesh, i, it, extraOut, sc) {
+  const t = ST[it.f];
+  if (t.v < 0.015) { _m.makeScale(0, 0, 0); mesh.setMatrixAt(i, _m); return; }
+  let x = it.p[0], z = it.p[2];
+  if (it.n && extraOut) { x += it.n[0] * extraOut; z += it.n[1] * extraOut; }
+  _p.set(x * t.c + z * t.s, it.p[1] + t.y, -x * t.s + z * t.c);
+  _qf.setFromAxisAngle(UP, t.a); _q.multiplyQuaternions(_qf, it.q);
+  const k = sc == null ? 1 : sc;
+  _s.set(it.s[0] * k, it.s[1], it.s[2] * k);
+  _m.compose(_p, _q, _s); mesh.setMatrixAt(i, _m);
+}
+function layoutAll() {
+  storeys();
+  const out = S.explode * 9;
+  [mSlab, mCore, mTruss].forEach(m => { m.userData.items.forEach((it, i) => placeTo(m, i, it, 0)); m.instanceMatrix.needsUpdate = true; });
+  mCol.userData.items.forEach((it, i) => placeTo(mCol, i, it, 0)); mCol.instanceMatrix.needsUpdate = true;
+  mGlass.userData.items.forEach((it, i) => placeTo(mGlass, i, it, out)); mGlass.instanceMatrix.needsUpdate = true;
+  mMull.userData.items.forEach((it, i) => placeTo(mMull, i, it, out)); mMull.instanceMatrix.needsUpdate = true;
+  const top = ST[NF - 1];
+  crown.visible = top.v > 0.015; crown.position.set(0, top.y, 0); crown.rotation.y = top.a;
+}
+function layoutFootings() {
+  const a = S.footA;
+  COLS.forEach(([x, z], i) => {
+    const s = lerp(raw[i], gsize[i], sm(0, 1, S.groups));
+    if (a < 0.01) _m.makeScale(0, 0, 0);
+    else { _p.set(x, -1.75 - (1 - a) * 3, z); _s.set(s, 1.1, s); _m.compose(_p, Q0, _s); }
+    mFoot.setMatrixAt(i, _m);
+    if (a < 0.01) _m.makeScale(0, 0, 0);
+    else { _p.set(x, -0.8 + S.lift * 0.0, z); _s.set(0.95, 0.8 + S.lift * 0, 0.95); _m.compose(_p, Q0, _s); }
+    mPed.setMatrixAt(i, _m);
+    _c.copy(CONC).lerp(GCOL[grp[i]], sm(0.15, 0.9, S.groups)); mFoot.setColorAt(i, _c);
+  });
+  mFoot.instanceMatrix.needsUpdate = true; mPed.instanceMatrix.needsUpdate = true; if (mFoot.instanceColor) mFoot.instanceColor.needsUpdate = true;
+}
+const scanTop = NF * FH + 6;
+function colorCols() {
+  const sy = S.scan * scanTop, ch = S.check;
+  for (let i = 0; i < cols.length; i++) {
+    const it = cols[i]; const yb = it.f * FH + MID;
+    const passed = ch > 0 && sy > yb ? sm(yb, yb + 6, sy) * ch : 0;
+    const bad = i === BADCOL[0].idx || i === BADCOL[1].idx;
+    _c.copy(CONC).lerp(bad ? BAD : PASS, bad ? passed : passed * 0.85);
+    mCol.setColorAt(i, _c);
+  }
+  mCol.instanceColor.needsUpdate = true;
+}
+
+/* ================= post ================= */
+let composer = null, bloom = null;
+function setupComposer() {
+  if (mobile) return;
+  const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: 4 });
+  composer = new EffectComposer(renderer, rt);
+  composer.addPass(new RenderPass(scene, camera));
+  bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.42, 0.5, 1.05);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+}
+setupComposer();
+
+let W = 1, H = 1;
+function resize() {
+  W = window.innerWidth; H = window.innerHeight;
+  mobile = matchMedia('(max-width: 900px)').matches;
+  renderer.setSize(W, H, false);
+  camera.aspect = W / H; camera.updateProjectionMatrix();
+  if (composer) { composer.setPixelRatio(DPR); composer.setSize(W, H); bloom.resolution.set(W / 2, H / 2); }
+}
+resize();
+
+/* ================= callouts ================= */
+const co = [document.getElementById('co1'), document.getElementById('co2')];
+const vF = document.getElementById('vF'), vT = document.getElementById('vT'), kF = document.getElementById('kF'), kT = document.getElementById('kT');
+const vG = document.getElementById('vG'), vS = document.getElementById('vS');
+const _v = new THREE.Vector3();
+function project(p) { _v.copy(p).project(camera); return [(_v.x + 1) / 2 * W, (1 - _v.y) / 2 * H, _v.z]; }
+
+/* ================= pointer ================= */
+const ptr = { x: 0, y: 0, sx: 0, sy: 0 };
+if (finePointer) window.addEventListener('pointermove', e => { ptr.x = e.clientX / window.innerWidth * 2 - 1; ptr.y = e.clientY / window.innerHeight * 2 - 1; }, { passive: true });
+
+/* ================= loop ================= */
+const clock = new THREE.Clock();
+let sig = '', fsig = '', csig = '';
+const tgt = new THREE.Vector3();
+function frame() {
+  const t = clock.getElapsedTime();
+  const s1 = [S.floors, I.floors, S.explode, S.twist, S.lift].map(v => v.toFixed(4)).join();
+  if (s1 !== sig) { sig = s1; layoutAll(); }
+  const s2 = [S.footA, S.groups].map(v => v.toFixed(4)).join();
+  if (s2 !== fsig) { fsig = s2; layoutFootings(); }
+  const s3 = [S.scan, S.check].map(v => v.toFixed(4)).join();
+  if (s3 !== csig) { csig = s3; colorCols(); }
+
+  /* materials */
+  const ta = S.towerA;
+  const tv = ta > 0.01;
+  [mSlab, mCol, mCore, mMull, mTruss].forEach(o => o.visible = tv);
+  crown.visible = tv && ST[NF - 1].v > 0.015;
+  towerMats.forEach(m => { const tr = ta < 0.999; if (m.transparent !== tr) { m.transparent = tr; m.depthWrite = !tr; m.needsUpdate = true; } m.opacity = ta; });
+  M.glass.opacity = 0.32 * S.skin * ta; mGlass.visible = tv && M.glass.opacity > 0.005;
+  M.accent.emissiveIntensity = 0.45 + 0.25 * Math.sin(t * 1.6) ** 2;
+  groundMat.opacity = S.groundA; groundMat.depthWrite = S.groundA > 0.95;
+  mFoot.visible = mPed.visible = S.footA > 0.01;
+  ghostMat.opacity = S.ghost * (0.55 + 0.25 * Math.sin(t * 2.2));
+  ghost.visible = S.ghost > 0.01; ghost.position.y = (1 - S.ghost) * 14;
+  beacon.material.color.setRGB(6 * (0.35 + 0.65 * (Math.sin(t * 3) > 0.6 ? 1 : 0.15)), 0.4, 0.2);
+
+  /* scan ring */
+  const sOn = S.check > 0.01 && S.scan > 0.002 && S.scan < 1.04;
+  scan.visible = sOn; scan.position.y = S.scan * scanTop;
+  scanMat.opacity = sOn ? S.check : 0; scanFill.material.opacity = sOn ? 0.09 * S.check : 0;
+  /* flags + callouts */
+  BADCOL.forEach((b, k) => {
+    const it = cols[b.idx], st2 = ST[it.f];
+    const yb = it.f * FH + MID, on = S.check * sm(yb, yb + 6, S.scan * scanTop);
+    const g = flags[k];
+    g.visible = on > 0.01;
+    const x = it.p[0], z = it.p[2];
+    g.position.set(x * st2.c + z * st2.s, it.p[1] + st2.y, -x * st2.s + z * st2.c);
+    if (k === 0) { flagMat.opacity = on; flagFill.opacity = on * 0.35; }
+    const [px, py, pz] = project(g.position);
+    const vis = on > 0.01 && pz < 1;
+    co[k].style.opacity = vis ? on : 0;
+    if (vis) co[k].style.transform = `translate3d(${(px + 18).toFixed(1)}px, ${(py - 16).toFixed(1)}px, 0)`;
+  });
+
+  /* beam */
+  const ba = S.beamA, be = sm(0, 1, ba);
+  beamRig.visible = ba > 0.005;
+  if (beamRig.visible) {
+    beamRig.position.set(lerp(14, 0, be), lerp(34, 17, be), lerp(12, 46, be));
+    beamRig.scale.setScalar(lerp(0.25, 1, be));
+    beamRig.rotation.y = (1 - be) * 0.9;
+    const clear = sm(0.0, 0.35, S.beamDraw);
+    concMat.opacity = ba * (1 - 0.86 * clear); concMat.depthWrite = clear < 0.05 && ba > 0.99; concMat.transparent = true;
+    const bd = sm(0.08, 0.55, S.beamDraw);
+    bars.forEach((m, i) => { const g = m.geometry; const n = g.index.count; const fr = clamp(bd * 1.15 - i * 0.03); g.setDrawRange(0, Math.floor(fr * n / 48) * 48); m.visible = fr > 0.002; });
+    mStir.count = Math.floor(sm(0.4, 0.92, S.beamDraw) * stirX.length);
+    mStir.visible = mStir.count > 0;
+    const la = sm(0.85, 1, S.beamDraw) * ba;
+    beamMark.material.opacity = la; dimLine.material.opacity = la;
+    sheet.material.opacity = ba * (0.35 + 0.65 * (1 - sm(0.6, 1, S.beamDraw) * 0.35));
+  }
+  /* cube */
+  const ca = S.cubeA, ce = sm(0, 1, ca);
+  cubeRig.visible = ca > 0.005;
+  if (cubeRig.visible) {
+    cubeRig.position.set(lerp(30, 0, ce), lerp(-10, 6.5, ce), 46);
+    cubeRig.rotation.y = -0.35 + (1 - ce) * 1.2;
+    const down = sm(0, 0.62, S.press), squash = sm(0.62, 1, S.press);
+    cube.scale.set(1 + squash * 0.012, 1 - squash * 0.035, 1 + squash * 0.012); cube.position.y = -squash * 0.07;
+    const topY = 2.45 + (1 - down) * 5.5 - squash * 0.14;
+    pTop.position.y = topY;
+    const ramBot = topY + 0.45, ramTop = 12.2; ram.scale.y = Math.max(0.01, ramTop - ramBot); ram.position.y = (ramTop + ramBot) / 2;
+    crackMats.forEach(m => m.opacity = sm(0.78, 1, S.press));
+    cube.rotation.y = squash * 0.0;
+  }
+
+  /* camera */
+  const az = S.az + I.az + Math.sin(t * 0.13) * 0.05 + ptr.sx * 0.1;
+  const el = S.el + ptr.sy * -0.04;
+  let dist = S.dist * I.zoom;
+  const aspect = W / H;
+  if (mobile) {
+    const fitW = S.wid * 1.08 / (2 * TAN * aspect);
+    const fitH = S.hgt / (2 * TAN * 0.6);
+    dist = Math.max(dist, fitW, fitH);
+  } else {
+    dist = Math.max(dist, S.hgt / (2 * TAN * 0.86));
+  }
+  ptr.sx += (ptr.x - ptr.sx) * 0.05; ptr.sy += (ptr.y - ptr.sy) * 0.05;
+  tgt.set(S.tx, S.ty, S.tz);
+  camera.position.set(tgt.x + dist * Math.cos(el) * Math.sin(az), tgt.y + dist * Math.sin(el), tgt.z + dist * Math.cos(el) * Math.cos(az));
+  camera.lookAt(tgt);
+  if (mobile) camera.setViewOffset(W, H, 0, S.sy * H * 1.0, W, H);
+  else camera.setViewOffset(W, H, -S.sx * W, 0, W, H);
+  scene.fog.near = dist * 0.9 + 60; scene.fog.far = dist + 700;
+
+  /* live readouts */
+  const fl = Math.round(Math.min(S.floors, I.floors));
+  vF.textContent = fl; kF.style.setProperty('--v', (fl / NF * 100).toFixed(1) + '%');
+  vT.textContent = Math.round(S.twist) + '°'; kT.style.setProperty('--v', (S.twist / 20 * 100).toFixed(1) + '%');
+  vG.textContent = Math.round(lerp(40, 15, sm(0.1, 0.95, S.groups)));
+  const sc = clamp(S.scan / 1.0);
+  vS.textContent = sc >= 0.999 ? '1,000+' : Math.round(sc * 1000).toLocaleString('en-US');
+
+  if (composer) composer.render(); else renderer.render(scene, camera);
+}
+renderer.setAnimationLoop(frame);
+
+/* intro */
+function intro() {
+  if (reduce) return;
+  gsap.to(I, { floors: NF, duration: 2.6, ease: 'power2.inOut', delay: 0.15 });
+  gsap.to(I, { az: 0, zoom: 1, duration: 3.2, ease: 'power3.out' });
+}
+window.addEventListener('intro', intro, { once: true });
+
+let rt = 0;
+function rebuild() { resize(); build(); if (window.__measureText) window.__measureText(); }
+window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(rebuild, 160); });
+window.addEventListener('load', rebuild);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { [beamMark, dimLine, sheet].forEach(m => m.userData.redraw()); rebuild(); });
+build();
+renderer.compile(scene, camera);
+window.__glReady = true;
+window.__S = S;
 </script>
 </body>
 </html>

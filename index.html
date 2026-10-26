@@ -248,7 +248,7 @@ footer.plain { padding-bottom: 60px; }
   .chips { margin-top: 0.933rem; }
   .dev { margin-top: 0.933rem; }
   .dev li { grid-template-columns: 1fr; gap: 0.133rem; padding: 0.667rem 0; font-size: 0.86rem; }
-  .hud-l { display: none; }
+  .hud-l, .hud-r { display: none; }
   .hud-r span { display: none; }
   .plain { padding: 7.333rem 0 6rem; }
   .plain::before { background: rgba(5,7,11,.86); }
@@ -665,6 +665,44 @@ footer.plain { padding-bottom: 60px; }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
   window.__measureText = measure;
   requestAnimationFrame(frame);
+
+  /* phones: never rest mid-transition. When scrolling stops, glide to the nearest settled frame. */
+  var SNAP = { hero: [0], work: [0.72], gh: [0.44, 0.74], found: [0.44, 0.74], valid: [0.44, 0.74], beam: [0.44, 0.74], rha: [0.44, 0.74], next: [0.62] };
+  var expEl = document.getElementById('experience');
+  var touching = false, snapping = false, idleT = 0, lastSY = window.scrollY || 0, dir = 1;
+  function snapPoints() {
+    var pts = [];
+    chs.forEach(function (c) { (SNAP[c.el.getAttribute('data-ch')] || []).forEach(function (f) { pts.push(Math.round(c.top + f * c.span)); }); });
+    pts.push(Math.round(expEl.getBoundingClientRect().top + (window.scrollY || 0)));
+    return pts.sort(function (a, b) { return a - b; });
+  }
+  function settle() {
+    if (!phoneQ.matches || touching || snapping) return;
+    if (modalEl.classList.contains('on') || drawer.classList.contains('on')) return;
+    var y = window.scrollY || 0, pts = snapPoints(), last = pts[pts.length - 1];
+    if (y >= last - 2) return;                       /* reading experience / skills / contact: scroll freely */
+    var prev = pts[0], next = last;
+    for (var i = 0; i < pts.length; i++) { if (pts[i] <= y) prev = pts[i]; if (pts[i] > y) { next = pts[i]; break; } }
+    if (Math.abs(y - prev) < 3) return;
+    var frac = (y - prev) / Math.max(1, next - prev);
+    var target = dir > 0 ? (frac > 0.12 ? next : prev) : (frac < 0.88 ? prev : next);
+    if (Math.abs(target - y) < 3) return;
+    snapping = true;
+    var done = function () { snapping = false; lastSY = window.scrollY || 0; };
+    if (window.__lenis) window.__lenis.scrollTo(target, { duration: Math.min(1.1, 0.45 + Math.abs(target - y) / 2400), easing: function (t) { return 1 - Math.pow(1 - t, 3); }, onComplete: done });
+    else { window.scrollTo({ top: target, behavior: 'smooth' }); setTimeout(done, 900); }
+    setTimeout(function () { snapping = false; }, 1600);
+  }
+  window.addEventListener('touchstart', function () { touching = true; snapping = false; clearTimeout(idleT); }, { passive: true });
+  window.addEventListener('touchend', function () { touching = false; clearTimeout(idleT); idleT = setTimeout(settle, 180); }, { passive: true });
+  window.addEventListener('touchcancel', function () { touching = false; }, { passive: true });
+  window.addEventListener('scroll', function () {
+    var y = window.scrollY || 0;
+    if (!snapping && Math.abs(y - lastSY) > 0.5) dir = y > lastSY ? 1 : -1;
+    lastSY = y;
+    if (snapping) return;
+    clearTimeout(idleT); idleT = setTimeout(settle, 160);
+  }, { passive: true });
 
   /* hero title split into words */
   var h1 = document.getElementById('heroTitle');

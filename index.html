@@ -676,18 +676,19 @@ footer.plain { padding-bottom: 60px; }
      Experience, Skills and Contact below the story scroll normally. */
   var SNAP = { hero: [0], work: [0.72], gh: [0.44, 0.74], found: [0.44, 0.74], valid: [0.44, 0.74], beam: [0.44, 0.74], rha: [0.44, 0.74], next: [0.62] };
   var expEl = document.getElementById('experience');
+  var slideCh = {};                                   /* y -> chapter name, to spot video pop-ups */
   function keySlides() {
-    var pts = [];
-    chs.forEach(function (c) { (SNAP[c.el.getAttribute('data-ch')] || []).forEach(function (f) { pts.push(Math.round(c.top + f * c.span)); }); });
+    var pts = []; slideCh = {};
+    chs.forEach(function (c) { var n = c.el.getAttribute('data-ch'); (SNAP[n] || []).forEach(function (f) { var y = Math.round(c.top + f * c.span); pts.push(y); slideCh[y] = n; }); });
     pts.push(Math.round(expEl.getBoundingClientRect().top + (window.scrollY || 0)));
     return pts.sort(function (a, b) { return a - b; });
   }
   var paging = false, animId = 0, tStart = 0, yStart = 0, xStart = 0, mode = null;
   function ease(t) { return -(Math.cos(Math.PI * t) - 1) / 2; }   /* gentle in-out so the middle of the move is watchable */
-  function glideTo(target) {
+  function glideTo(target, quick) {
     var from = window.scrollY || 0, dist = target - from;
     if (Math.abs(dist) < 2) return;
-    var dur = Math.max(1900, Math.min(3400, 1500 + Math.abs(dist) / window.innerHeight * 520));
+    var dur = quick ? 750 : Math.max(1900, Math.min(3400, 1500 + Math.abs(dist) / window.innerHeight * 520));
     var t0 = performance.now(); paging = true;
     cancelAnimationFrame(animId);
     (function step(now) {
@@ -725,7 +726,9 @@ footer.plain { padding-bottom: 60px; }
     if (Math.abs(t.clientX - xStart) > Math.abs(dy) * 1.4) return; /* sideways gesture */
     var pts = keySlides(), y = window.scrollY || 0, i = currentIndex(pts, y);
     var target = dy > 0 ? Math.min(pts.length - 1, (pts[i] > y + 2 ? i : i + 1)) : Math.max(0, (pts[i] < y - 2 ? i : i - 1));
-    glideTo(pts[target]);
+    /* 3D slide <-> its demo video in the same project: quick pop, no 3D story in between */
+    var a = slideCh[pts[i]], b = slideCh[pts[target]];
+    glideTo(pts[target], !!(a && a === b && SNAP[a].length > 1));
   }, { passive: true });
   /* landing between slides (anchor link, rotation): settle onto the nearest one */
   var idleT = 0;

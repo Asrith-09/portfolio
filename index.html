@@ -683,11 +683,11 @@ footer.plain { padding-bottom: 60px; }
     return pts.sort(function (a, b) { return a - b; });
   }
   var paging = false, animId = 0, tStart = 0, yStart = 0, xStart = 0, mode = null;
-  function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function ease(t) { return -(Math.cos(Math.PI * t) - 1) / 2; }   /* gentle in-out so the middle of the move is watchable */
   function glideTo(target) {
     var from = window.scrollY || 0, dist = target - from;
     if (Math.abs(dist) < 2) return;
-    var dur = Math.max(750, Math.min(1500, 650 + Math.abs(dist) / window.innerHeight * 260));
+    var dur = Math.max(1900, Math.min(3400, 1500 + Math.abs(dist) / window.innerHeight * 520));
     var t0 = performance.now(); paging = true;
     cancelAnimationFrame(animId);
     (function step(now) {
